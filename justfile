@@ -25,9 +25,12 @@ fmt:
 
 # Bless UI tests: update *.stderr files from the latest failing run output.
 # Works across multiple lint crates if they live somewhere under the workspace root.
-bless:
+bless: && test
+  #!/usr/bin/env bash
+  set -euo pipefail
+
   out=$(mktemp) \
-  && (cargo test 2>&1 | tee "$out" || true) \
+  && (cargo --color always test 2>&1 | tee "$out" || true) \
   && grep 'Actual stderr saved to ' "$out" | while IFS= read -r line; do \
        path=$(printf '%s' "$line" | sed 's/.*Actual stderr saved to \([^ ]*\).*/\1/'); \
        [ -f "$path" ] || continue; \
@@ -38,9 +41,7 @@ bless:
        dir=$(dirname "$test_rs"); \
        cp "$path" "$dir/$test_name.stderr"; \
        echo "Blessed $dir/$test_name.stderr"; \
-     done \
-  && echo "Re-running tests after blessing..." \
-  && cargo test
+     done
 
 # Bless a single test: just bless-one <name> (without .rs)
 bless-one name:

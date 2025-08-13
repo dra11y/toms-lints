@@ -36,6 +36,15 @@ LL |         println!("y is positive"); // This should trigger the lint
    = help: consider moving this comment to its own line above the code
 
 warning: 
+  --> $DIR/main.rs:20:31
+   |
+LL |         42 => "magic number", /* block comment should not be here */
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: end-of-line comment should be moved to its own line above the code
+   = help: consider moving this comment to its own line above the code
+
+warning: 
   --> $DIR/main.rs:28:13
    |
 LL |     x: i32, // Field comment - should trigger lint
@@ -62,5 +71,5 @@ LL |         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigg
    = note: end-of-line comment should be moved to its own line above the code
    = help: consider moving this comment to its own line above the code
 
-warning: 7 warnings emitted
+warning: 8 warnings emitted
 

@@ -17,7 +17,7 @@ fn main() {
 
     let result = match x {
         // This is fine - comment on its own line
-        42 => "magic number",
+        42 => "magic number", /* block comment should not be here */
         _ => "other",
     };
 
