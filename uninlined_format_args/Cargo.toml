@@ -1,8 +1,8 @@
 [package]
-name = "eol_comments"
+name = "uninlined_format_args"
 version = "0.1.0"
 authors = ["Tom Grushka"]
-description = "Lint for end-of-line comments"
+description = "Lint for uninlined format args"
 edition = "2024"
 publish = false
 
@@ -14,6 +14,7 @@ dylint_linting.workspace = true
 
 [dev-dependencies]
 dylint_testing.workspace = true
+tracing = "0.1.41"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
