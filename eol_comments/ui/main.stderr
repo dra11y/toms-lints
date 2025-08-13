@@ -1,0 +1,53 @@
+warning: 
+  --> $DIR/main.rs:1:1
+   |
+LL | / fn main() {
+LL | |     let x = 42; // This should trigger the lint
+LL | |     let y = 10; // Another end-of-line comment
+...  |
+LL | |     println!("{}", result);
+LL | | }
+   | |_^
+   |
+   = note: end-of-line comment should be moved to its own line above the code
+   = help: consider moving this comment to its own line above the code
+   = note: `#[warn(eol_comments)]` on by default
+
+warning: 
+  --> $DIR/main.rs:14:5
+   |
+LL | /     if y > 0 {
+LL | |         println!("y is positive"); // This should trigger the lint
+LL | |     }
+   | |_____^
+   |
+   = note: end-of-line comment should be moved to its own line above the code
+   = help: consider moving this comment to its own line above the code
+
+warning: 
+  --> $DIR/main.rs:27:1
+   |
+LL | / struct Point {
+LL | |     x: i32, // Field comment - should trigger lint
+LL | |     y: i32, // Another field comment - should trigger lint
+LL | | }
+   | |_^
+   |
+   = note: end-of-line comment should be moved to its own line above the code
+   = help: consider moving this comment to its own line above the code
+
+warning: 
+  --> $DIR/main.rs:32:1
+   |
+LL | / impl Point {
+LL | |     fn new(x: i32, y: i32) -> Self {
+LL | |         // This comment is fine - it's on its own line
+LL | |         Self { x, y }
+...  |
+LL | | }
+   | |_^
+   |
+   = note: end-of-line comment should be moved to its own line above the code
+   = help: consider moving this comment to its own line above the code
+
+warning: 4 warnings emitted
