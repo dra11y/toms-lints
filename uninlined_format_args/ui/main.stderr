@@ -1,0 +1,48 @@
+warning: 
+  --> $DIR/main.rs:33:46
+   |
+LL |     info!(name: "test", "This is a test with {:?}", b);
+   |                                              ^^^^
+   |
+   = note: format argument should be inlined
+   = help: consider using the variable name directly in the placeholder
+   = note: `#[warn(uninlined_format_args)]` on by default
+
+warning: 
+  --> $DIR/main.rs:35:53
+   |
+LL |     info!(name: "test", { b }, "This is a test with {}", a);
+   |                                                     ^^
+   |
+   = note: format argument should be inlined
+   = help: consider using the variable name directly in the placeholder
+
+warning: 
+  --> $DIR/main.rs:37:114
+   |
+LL |     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
+   |                                                                                                                  ^^
+   |
+   = note: format argument should be inlined
+   = help: consider using the variable name directly in the placeholder
+
+warning: 
+  --> $DIR/main.rs:39:42
+   |
+LL |     info!({ a, b }, "This is a test with {}", a);
+   |                                          ^^
+   |
+   = note: format argument should be inlined
+   = help: consider using the variable name directly in the placeholder
+
+warning: 
+  --> $DIR/main.rs:41:32
+   |
+LL |     info!("This is a test with {:?}", b);
+   |                                ^^^^
+   |
+   = note: format argument should be inlined
+   = help: consider using the variable name directly in the placeholder
+
+warning: 5 warnings emitted
+

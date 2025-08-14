@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["eol_comments", "format_args"]
+members = ["eol_comments", "uninlined_format_args"]
 
 [workspace.dependencies]
 dylint_linting = "4.1.0"

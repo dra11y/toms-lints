@@ -14,7 +14,9 @@ dylint_linting.workspace = true
 
 [dev-dependencies]
 dylint_testing.workspace = true
-tracing = "0.1.41"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
+
+[[package.metadata.rust-analyzer.rustc_private_crates]]
+name = "rustc_hir"
