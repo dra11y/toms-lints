@@ -39,7 +39,10 @@ fn main() {
     info!(name: "test", { b }, "This is a test with {}", a);
     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
     info!({ a, b }, "This is a test with {}", a);
-    info!("This is a test with {:?}", b);
+    info!(
+        "This is a test with {} and {:?}, with {} several {} placeholders {}",
+        a, b, c, d, e
+    );
 
     // Additional format variant examples
     // Display format (default)

@@ -1,179 +1,292 @@
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:38:46
+  --> $DIR/main.rs:38:5
    |
 LL |     info!(name: "test", "This is a test with {:?}", b);
-   |                                              ^^^^ help: change this to: `{b:?}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
    = note: `#[warn(uninlined_format_args)]` on by default
+help: change this to
+   |
+LL -     info!(name: "test", "This is a test with {:?}", b);
+LL +     info!(name: "test", "This is a test with {b:?}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:39:53
+  --> $DIR/main.rs:39:5
    |
 LL |     info!(name: "test", { b }, "This is a test with {}", a);
-   |                                                     ^^ help: change this to: `{a}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!(name: "test", { b }, "This is a test with {}", a);
+LL +     info!(name: "test", { b }, "This is a test with {a}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:40:114
+  --> $DIR/main.rs:40:5
    |
 LL |     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
-   |                                                                                                                  ^^ help: change this to: `{a}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
+LL +     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {a}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:41:42
+  --> $DIR/main.rs:41:5
    |
 LL |     info!({ a, b }, "This is a test with {}", a);
-   |                                          ^^ help: change this to: `{a}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!({ a, b }, "This is a test with {}", a);
+LL +     info!({ a, b }, "This is a test with {a}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:42:32
+  --> $DIR/main.rs:42:5
    |
-LL |     info!("This is a test with {:?}", b);
-   |                                ^^^^ help: change this to: `{b:?}`
+LL | /     info!(
+LL | |         "This is a test with {} and {:?}, with {} several {} placeholders {}",
+LL | |         a, b, c, d, e
+LL | |     );
+   | |_____^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -         "This is a test with {} and {:?}, with {} several {} placeholders {}",
+LL +         "This is a test with {a} and {b:?}, with {c} several {d} placeholders {e}"
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:46:28
+  --> $DIR/main.rs:49:5
    |
 LL |     info!("Display format: {}", c);
-   |                            ^^ help: change this to: `{c}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Display format: {}", c);
+LL +     info!("Display format: {c}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:49:26
+  --> $DIR/main.rs:52:5
    |
 LL |     info!("Debug format: {:?}", c);
-   |                          ^^^^ help: change this to: `{c:?}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Debug format: {:?}", c);
+LL +     info!("Debug format: {c:?}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:52:30
+  --> $DIR/main.rs:55:5
    |
 LL |     info!("Scientific lower: {:e}", d);
-   |                              ^^^^ help: change this to: `{d:e}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Scientific lower: {:e}", d);
+LL +     info!("Scientific lower: {d:e}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:55:30
+  --> $DIR/main.rs:58:5
    |
 LL |     info!("Scientific upper: {:E}", d);
-   |                              ^^^^ help: change this to: `{d:E}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Scientific upper: {:E}", d);
+LL +     info!("Scientific upper: {d:E}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:58:19
+  --> $DIR/main.rs:61:5
    |
 LL |     info!("Octal: {:o}", e);
-   |                   ^^^^ help: change this to: `{e:o}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Octal: {:o}", e);
+LL +     info!("Octal: {e:o}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:61:21
+  --> $DIR/main.rs:64:5
    |
 LL |     info!("Pointer: {:p}", ptr);
-   |                     ^^^^ help: change this to: `{ptr:p}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Pointer: {:p}", ptr);
+LL +     info!("Pointer: {ptr:p}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:64:20
+  --> $DIR/main.rs:67:5
    |
 LL |     info!("Binary: {:b}", e);
-   |                    ^^^^ help: change this to: `{e:b}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Binary: {:b}", e);
+LL +     info!("Binary: {e:b}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:67:23
+  --> $DIR/main.rs:70:5
    |
 LL |     info!("Hex lower: {:x}", e);
-   |                       ^^^^ help: change this to: `{e:x}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Hex lower: {:x}", e);
+LL +     info!("Hex lower: {e:x}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:70:23
+  --> $DIR/main.rs:73:5
    |
 LL |     info!("Hex upper: {:X}", e);
-   |                       ^^^^ help: change this to: `{e:X}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Hex upper: {:X}", e);
+LL +     info!("Hex upper: {e:X}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:73:27
+  --> $DIR/main.rs:76:5
    |
 LL |     info!("Right aligned: {:>10}", c);
-   |                           ^^^^^^ help: change this to: `{c:>10}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Right aligned: {:>10}", c);
+LL +     info!("Right aligned: {c:>10}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:74:26
+  --> $DIR/main.rs:77:5
    |
 LL |     info!("Left aligned: {:<10}", c);
-   |                          ^^^^^^ help: change this to: `{c:<10}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Left aligned: {:<10}", c);
+LL +     info!("Left aligned: {c:<10}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:75:28
+  --> $DIR/main.rs:78:5
    |
 LL |     info!("Center aligned: {:^10}", c);
-   |                            ^^^^^^ help: change this to: `{c:^10}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Center aligned: {:^10}", c);
+LL +     info!("Center aligned: {c:^10}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:76:25
+  --> $DIR/main.rs:79:5
    |
 LL |     info!("Zero padded: {:08}", c);
-   |                         ^^^^^ help: change this to: `{c:08}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Zero padded: {:08}", c);
+LL +     info!("Zero padded: {c:08}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:77:23
+  --> $DIR/main.rs:80:5
    |
 LL |     info!("With sign: {:+}", c);
-   |                       ^^^^ help: change this to: `{c:+}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("With sign: {:+}", c);
+LL +     info!("With sign: {c:+}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:78:23
+  --> $DIR/main.rs:81:5
    |
 LL |     info!("Precision: {:.2}", d);
-   |                       ^^^^^ help: change this to: `{d:.2}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Precision: {:.2}", d);
+LL +     info!("Precision: {d:.2}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:79:27
+  --> $DIR/main.rs:82:5
    |
 LL |     info!("Alternate hex: {:#x}", e);
-   |                           ^^^^^ help: change this to: `{e:#x}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Alternate hex: {:#x}", e);
+LL +     info!("Alternate hex: {e:#x}");
+   |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:80:23
+  --> $DIR/main.rs:83:5
    |
 LL |     info!("Debug hex: {:x?}", e);
-   |                       ^^^^^ help: change this to: `{e:x?}`
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     info!("Debug hex: {:x?}", e);
+LL +     info!("Debug hex: {e:x?}");
+   |
 
 warning: 22 warnings emitted
 

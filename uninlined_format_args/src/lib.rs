@@ -7,12 +7,70 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use rustc_ast::{
-    Expr, ExprKind, FormatAlignment, FormatArgPositionKind, FormatArgumentKind, FormatCount,
-    FormatDebugHex, FormatSign, FormatTrait,
+    Expr, ExprKind, FormatArgPositionKind, FormatArgs, FormatArgsPiece, FormatArgumentKind,
+    FormatPlaceholder, MacCall,
 };
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_lint_defs::Applicability;
-// use rustc_middle::lint::LintLevelSource;
+use rustc_span::{BytePos, Span, hygiene};
+
+/// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L456
+/// Span of the `:` and format specifiers
+///
+/// ```ignore
+/// format!("{:.}"), format!("{foo:.}")
+///           ^^                  ^^
+/// ```
+pub fn format_placeholder_format_span(placeholder: &FormatPlaceholder) -> Option<Span> {
+    let base = placeholder.span?.data();
+
+    // `base.hi` is `{...}|`, subtract 1 byte (the length of '}') so that it points before the closing
+    // brace `{...|}`
+    Some(Span::new(
+        placeholder.argument.span?.hi(),
+        base.hi - BytePos(1),
+        base.ctxt,
+        base.parent,
+    ))
+}
+
+/// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L481
+/// Span covering the format string and values
+///
+/// ```ignore
+/// format("{}.{}", 10, 11)
+/// //     ^^^^^^^^^^^^^^^
+/// ```
+pub fn format_args_inputs_span(format_args: &FormatArgs) -> Span {
+    match format_args.arguments.explicit_args() {
+        [] => format_args.span,
+        [.., last] => format_args
+            .span
+            .to(hygiene::walk_chain(last.expr.span, format_args.span.ctxt())),
+    }
+}
+
+/// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L497
+/// Returns the [`Span`] of the value at `index` extended to the previous comma, e.g. for the value
+/// `10`
+///
+/// ```ignore
+/// format("{}.{}", 10, 11)
+/// //            ^^^^
+/// ```
+pub fn format_arg_removal_span(format_args: &FormatArgs, index: usize) -> Option<Span> {
+    let ctxt = format_args.span.ctxt();
+
+    let current = hygiene::walk_chain(format_args.arguments.by_index(index)?.expr.span, ctxt);
+
+    let prev = if index == 0 {
+        format_args.span
+    } else {
+        hygiene::walk_chain(format_args.arguments.by_index(index - 1)?.expr.span, ctxt)
+    };
+
+    Some(current.with_lo(prev.hi()))
+}
 
 dylint_linting::declare_early_lint! {
     /// ### What it does
@@ -39,6 +97,11 @@ dylint_linting::declare_early_lint! {
 }
 
 impl EarlyLintPass for UninlinedFormatArgs {
+    fn check_mac(&mut self, _cx: &EarlyContext, _mac: &MacCall) {
+        // does not work outside of pre_expansion!!!
+        // println!("mac: {mac:#?}");
+    }
+
     fn check_expr(&mut self, cx: &EarlyContext, expr: &Expr) {
         if cx.get_lint_level(UNINLINED_FORMAT_ARGS).level == Level::Allow {
             return;
@@ -48,206 +111,68 @@ impl EarlyLintPass for UninlinedFormatArgs {
             return;
         };
 
+        let mut fixes = Vec::new();
+
         for placeholder in format_args.template.iter() {
-            let rustc_ast::FormatArgsPiece::Placeholder(placeholder) = placeholder else {
+            let FormatArgsPiece::Placeholder(placeholder) = placeholder else {
                 continue;
             };
 
-            if placeholder.argument.kind == FormatArgPositionKind::Implicit {
-                self.check_implicit_placeholder(cx, placeholder, &format_args.arguments);
-            }
+            let FormatArgPositionKind::Implicit = placeholder.argument.kind else {
+                continue;
+            };
+
+            let Ok(arg_index) = placeholder.argument.index else {
+                continue;
+            };
+
+            let Some(format_arg) = format_args.arguments.by_index(arg_index) else {
+                continue;
+            };
+
+            let FormatArgumentKind::Normal = format_arg.kind else {
+                continue;
+            };
+
+            let ExprKind::Path(None, path) = &format_arg.expr.kind else {
+                continue;
+            };
+
+            let [segment] = path.segments.as_slice() else {
+                continue;
+            };
+
+            let Some(placeholder_span) = placeholder.span else {
+                continue;
+            };
+
+            let Some(arg_removal_span) = format_arg_removal_span(format_args, arg_index) else {
+                continue;
+            };
+
+            let variable_name = &segment.ident;
+            let format_spec = format_placeholder_format_span(placeholder)
+                .and_then(|spec_span| cx.sess().source_map().span_to_snippet(spec_span).ok())
+                .unwrap_or_default();
+            let suggestion = format!("{{{variable_name}{format_spec}}}");
+
+            fixes.push((placeholder_span, suggestion));
+            fixes.push((arg_removal_span, String::new()));
         }
-    }
-}
 
-impl UninlinedFormatArgs {
-    fn check_implicit_placeholder(
-        &self,
-        cx: &EarlyContext,
-        placeholder: &rustc_ast::FormatPlaceholder,
-        arguments: &rustc_ast::FormatArguments,
-    ) {
-        let Ok(arg_index) = placeholder.argument.index else {
-            return;
-        };
-
-        let Some(format_arg) = arguments.by_index(arg_index) else {
-            return;
-        };
-
-        if !matches!(format_arg.kind, FormatArgumentKind::Normal) {
+        if fixes.is_empty() {
             return;
         }
 
-        // This is a normal argument that could potentially be inlined
-        let ExprKind::Path(None, path) = &format_arg.expr.kind else {
-            return;
-        };
-
-        if path.segments.len() != 1 {
-            return;
-        }
-
-        let Some(span) = placeholder.span else {
-            return;
-        };
-
-        let variable_name = &path.segments[0].ident;
-
-        let format_spec = self.build_format_spec(placeholder);
-        let suggestion = format!("{{{variable_name}{format_spec}}}");
-
-        // error: variables can be used directly in the `format!` string
-        //   --> crate/src/module.rs:84:5
-        //    |
-        // 84 |     println!("idle timeout = {}", idle_timeout_seconds);
-        //    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        //    |
-        //    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
-        // note: the lint level is defined here
-        //   --> crate/src/lib.rs:1:9
-        //    |
-        //  1 | #![deny(clippy::uninlined_format_args)]
-        //    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        // help: change this to
-        //    |
-        // 84 -     println!("idle timeout = {}", idle_timeout_seconds);
-        // 84 +     println!("idle timeout = {idle_timeout_seconds}");
-        //    |
-        //
-        //    = note: `#[warn(uninlined_format_args)]` on by default
-        //
-        // note: the lint level is defined here
-        //   --> chromium-operator/src/api/chromium_session_handlers.rs:1:9
-        //    |
-        // 1  | #![deny(clippy::uninlined_format_args)]
-        //    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        // let level_and_src = cx.get_lint_level(UNINLINED_FORMAT_ARGS);
-
-        cx.span_lint(UNINLINED_FORMAT_ARGS, span, |lint| {
+        cx.span_lint(UNINLINED_FORMAT_ARGS, expr.span.source_callsite(), |lint| {
             lint.primary_message("variables can be used directly in the `format!` string");
             lint.help("for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args");
-            lint.span_suggestion(
-                span,
+            lint.multipart_suggestion(
                 "change this to",
-                suggestion,
+                fixes,
                 Applicability::MachineApplicable,
             );
-
-            // // Add notes about lint level similar to clippy
-            // match level_and_src.src {
-            //     LintLevelSource::Default => {
-            //         // let level: &'static str = level_and_src.level.as_str();
-            //         // lint.note(format!("`#[{level}({})]` on by default", UNINLINED_FORMAT_ARGS.name_lower()));
-            //     },
-            //     LintLevelSource::Node { span, .. } => {
-            //         lint.span_note(span, "the lint level is defined here");
-            //     },
-            //     LintLevelSource::CommandLine(_symbol, level) => {
-            //         lint.span_note(span, "the lint level is defined on the command line");
-            //     },
-            // }
         });
-    }
-
-    fn build_format_spec(&self, placeholder: &rustc_ast::FormatPlaceholder) -> String {
-        let mut spec = String::new();
-        let options = &placeholder.format_options;
-
-        // Check if we have any format options OR a non-default format trait
-        let has_options = options.fill.is_some()
-            || options.alignment.is_some()
-            || options.sign.is_some()
-            || options.alternate
-            || options.zero_pad
-            || options.width.is_some()
-            || options.precision.is_some()
-            || options.debug_hex.is_some()
-            || !matches!(placeholder.format_trait, FormatTrait::Display);
-
-        if !has_options {
-            return spec;
-        }
-
-        spec.push(':');
-
-        // Fill character (must come before alignment)
-        if let Some(fill) = options.fill {
-            spec.push(fill);
-        }
-
-        // Alignment
-        if let Some(alignment) = options.alignment {
-            match alignment {
-                FormatAlignment::Left => spec.push('<'),
-                FormatAlignment::Right => spec.push('>'),
-                FormatAlignment::Center => spec.push('^'),
-            }
-        }
-
-        // Sign
-        if let Some(sign) = options.sign {
-            match sign {
-                FormatSign::Plus => spec.push('+'),
-                FormatSign::Minus => spec.push('-'),
-            }
-        }
-
-        // Alternate flag
-        if options.alternate {
-            spec.push('#');
-        }
-
-        // Zero padding
-        if options.zero_pad {
-            spec.push('0');
-        }
-
-        // Width
-        if let Some(width) = &options.width {
-            match width {
-                FormatCount::Literal(n) => spec.push_str(&n.to_string()),
-                FormatCount::Argument(_pos) => {
-                    // For argument-based width like {:.width$}, we can't inline this
-                    // TODO: Handle this case - for now skip
-                }
-            }
-        }
-
-        // Precision
-        if let Some(precision) = &options.precision {
-            spec.push('.');
-            match precision {
-                FormatCount::Literal(n) => spec.push_str(&n.to_string()),
-                FormatCount::Argument(_pos) => {
-                    // For argument-based precision like {:.precision$}, we can't inline this
-                    // TODO: Handle this case - for now skip
-                }
-            }
-        }
-
-        // Debug hex modifier (for Debug trait)
-        if let Some(debug_hex) = options.debug_hex {
-            match debug_hex {
-                FormatDebugHex::Lower => spec.push_str("x?"),
-                FormatDebugHex::Upper => spec.push_str("X?"),
-            }
-        } else {
-            // Format trait specifier
-            match placeholder.format_trait {
-                FormatTrait::Display => {} // No specifier needed
-                FormatTrait::Debug => spec.push('?'),
-                FormatTrait::LowerExp => spec.push('e'),
-                FormatTrait::UpperExp => spec.push('E'),
-                FormatTrait::Octal => spec.push('o'),
-                FormatTrait::Pointer => spec.push('p'),
-                FormatTrait::Binary => spec.push('b'),
-                FormatTrait::LowerHex => spec.push('x'),
-                FormatTrait::UpperHex => spec.push('X'),
-            }
-        }
-
-        spec
     }
 }
 
