@@ -1,0 +1,48 @@
+warning: variables can be used directly in the `format!` string
+  --> $DIR/lint_attributes.rs:15:25
+   |
+LL |     info!("Normal case: {}", a);
+   |                         ^^ help: change this to: `{a}`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+   = note: `#[warn(uninlined_format_args)]` on by default
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/lint_attributes.rs:27:52
+   |
+LL |     info!("Should not lint due to statement allow: {}", b);
+   |                                                    ^^ help: change this to: `{b}`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/lint_attributes.rs:31:41
+   |
+LL |     info!("Should lint with deny level: {}", a);
+   |                                         ^^ help: change this to: `{a}`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/lint_attributes.rs:35:41
+   |
+LL |     info!("Should lint with warn level: {}", b);
+   |                                         ^^ help: change this to: `{b}`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+  --> $DIR/lint_attributes.rs:52:54
+   |
+LL |     info!("Should lint with deny in denied function: {}", y);
+   |                                                      ^^ help: change this to: `{y}`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+note: the lint level is defined here
+  --> $DIR/lint_attributes.rs:49:8
+   |
+LL | #[deny(uninlined_format_args)]
+   |        ^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 1 previous error; 4 warnings emitted
+

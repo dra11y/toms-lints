@@ -1,289 +1,179 @@
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:38:46
    |
 LL |     info!(name: "test", "This is a test with {:?}", b);
-   |                                              ^^^^
+   |                                              ^^^^ help: change this to: `{b:?}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
    = note: `#[warn(uninlined_format_args)]` on by default
-help: try
-   |
-LL |     info!(name: "test", "This is a test with {b:?}", b);
-   |                                               +
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:39:53
    |
 LL |     info!(name: "test", { b }, "This is a test with {}", a);
-   |                                                     ^^
+   |                                                     ^^ help: change this to: `{a}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!(name: "test", { b }, "This is a test with {a}", a);
-   |                                                      +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:40:114
    |
 LL |     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
-   |                                                                                                                  ^^
+   |                                                                                                                  ^^ help: change this to: `{a}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {a}", a);
-   |                                                                                                                   +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:41:42
    |
 LL |     info!({ a, b }, "This is a test with {}", a);
-   |                                          ^^
+   |                                          ^^ help: change this to: `{a}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!({ a, b }, "This is a test with {a}", a);
-   |                                           +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:42:32
    |
 LL |     info!("This is a test with {:?}", b);
-   |                                ^^^^
+   |                                ^^^^ help: change this to: `{b:?}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("This is a test with {b:?}", b);
-   |                                 +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:46:28
    |
 LL |     info!("Display format: {}", c);
-   |                            ^^
+   |                            ^^ help: change this to: `{c}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Display format: {c}", c);
-   |                             +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:49:26
    |
 LL |     info!("Debug format: {:?}", c);
-   |                          ^^^^
+   |                          ^^^^ help: change this to: `{c:?}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Debug format: {c:?}", c);
-   |                           +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:52:30
    |
 LL |     info!("Scientific lower: {:e}", d);
-   |                              ^^^^
+   |                              ^^^^ help: change this to: `{d:e}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Scientific lower: {d:e}", d);
-   |                               +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:55:30
    |
 LL |     info!("Scientific upper: {:E}", d);
-   |                              ^^^^
+   |                              ^^^^ help: change this to: `{d:E}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Scientific upper: {d:E}", d);
-   |                               +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:58:19
    |
 LL |     info!("Octal: {:o}", e);
-   |                   ^^^^
+   |                   ^^^^ help: change this to: `{e:o}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Octal: {e:o}", e);
-   |                    +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:61:21
    |
 LL |     info!("Pointer: {:p}", ptr);
-   |                     ^^^^
+   |                     ^^^^ help: change this to: `{ptr:p}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Pointer: {ptr:p}", ptr);
-   |                      +++
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:64:20
    |
 LL |     info!("Binary: {:b}", e);
-   |                    ^^^^
+   |                    ^^^^ help: change this to: `{e:b}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Binary: {e:b}", e);
-   |                     +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:67:23
    |
 LL |     info!("Hex lower: {:x}", e);
-   |                       ^^^^
+   |                       ^^^^ help: change this to: `{e:x}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Hex lower: {e:x}", e);
-   |                        +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:70:23
    |
 LL |     info!("Hex upper: {:X}", e);
-   |                       ^^^^
+   |                       ^^^^ help: change this to: `{e:X}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Hex upper: {e:X}", e);
-   |                        +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:73:27
    |
 LL |     info!("Right aligned: {:>10}", c);
-   |                           ^^^^^^
+   |                           ^^^^^^ help: change this to: `{c:>10}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Right aligned: {c:>10}", c);
-   |                            +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:74:26
    |
 LL |     info!("Left aligned: {:<10}", c);
-   |                          ^^^^^^
+   |                          ^^^^^^ help: change this to: `{c:<10}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Left aligned: {c:<10}", c);
-   |                           +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:75:28
    |
 LL |     info!("Center aligned: {:^10}", c);
-   |                            ^^^^^^
+   |                            ^^^^^^ help: change this to: `{c:^10}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Center aligned: {c:^10}", c);
-   |                             +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:76:25
    |
 LL |     info!("Zero padded: {:08}", c);
-   |                         ^^^^^
+   |                         ^^^^^ help: change this to: `{c:08}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Zero padded: {c:08}", c);
-   |                          +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:77:23
    |
 LL |     info!("With sign: {:+}", c);
-   |                       ^^^^
+   |                       ^^^^ help: change this to: `{c:+}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("With sign: {c:+}", c);
-   |                        +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:78:23
    |
 LL |     info!("Precision: {:.2}", d);
-   |                       ^^^^^
+   |                       ^^^^^ help: change this to: `{d:.2}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Precision: {d:.2}", d);
-   |                        +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:79:27
    |
 LL |     info!("Alternate hex: {:#x}", e);
-   |                           ^^^^^
+   |                           ^^^^^ help: change this to: `{e:#x}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Alternate hex: {e:#x}", e);
-   |                            +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
-warning: 
+warning: variables can be used directly in the `format!` string
   --> $DIR/main.rs:80:23
    |
 LL |     info!("Debug hex: {:x?}", e);
-   |                       ^^^^^
+   |                       ^^^^^ help: change this to: `{e:x?}`
    |
-   = note: format argument should be inlined
-   = help: consider using the variable name directly in the placeholder
-help: try
-   |
-LL |     info!("Debug hex: {e:x?}", e);
-   |                        +
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
 
 warning: 22 warnings emitted
 

@@ -1,15 +1,18 @@
 #![feature(rustc_private)]
 
 extern crate rustc_ast;
+extern crate rustc_errors;
 extern crate rustc_lint_defs;
+extern crate rustc_middle;
 extern crate rustc_span;
 
 use rustc_ast::{
     Expr, ExprKind, FormatAlignment, FormatArgPositionKind, FormatArgumentKind, FormatCount,
     FormatDebugHex, FormatSign, FormatTrait,
 };
-use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
+use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_lint_defs::Applicability;
+// use rustc_middle::lint::LintLevelSource;
 
 dylint_linting::declare_early_lint! {
     /// ### What it does
@@ -37,6 +40,10 @@ dylint_linting::declare_early_lint! {
 
 impl EarlyLintPass for UninlinedFormatArgs {
     fn check_expr(&mut self, cx: &EarlyContext, expr: &Expr) {
+        if cx.get_lint_level(UNINLINED_FORMAT_ARGS).level == Level::Allow {
+            return;
+        }
+
         let ExprKind::FormatArgs(format_args) = &expr.kind else {
             return;
         };
@@ -73,7 +80,7 @@ impl UninlinedFormatArgs {
         }
 
         // This is a normal argument that could potentially be inlined
-        let rustc_ast::ExprKind::Path(None, path) = &format_arg.expr.kind else {
+        let ExprKind::Path(None, path) = &format_arg.expr.kind else {
             return;
         };
 
@@ -90,11 +97,56 @@ impl UninlinedFormatArgs {
         let format_spec = self.build_format_spec(placeholder);
         let suggestion = format!("{{{variable_name}{format_spec}}}");
 
-        cx.lint(UNINLINED_FORMAT_ARGS, |lint| {
-            let diag = lint.span(span);
-            diag.note("format argument should be inlined");
-            diag.help("consider using the variable name directly in the placeholder");
-            diag.span_suggestion_verbose(span, "try", suggestion, Applicability::MachineApplicable);
+        // error: variables can be used directly in the `format!` string
+        //   --> crate/src/module.rs:84:5
+        //    |
+        // 84 |     println!("idle timeout = {}", idle_timeout_seconds);
+        //    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        //    |
+        //    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+        // note: the lint level is defined here
+        //   --> crate/src/lib.rs:1:9
+        //    |
+        //  1 | #![deny(clippy::uninlined_format_args)]
+        //    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        // help: change this to
+        //    |
+        // 84 -     println!("idle timeout = {}", idle_timeout_seconds);
+        // 84 +     println!("idle timeout = {idle_timeout_seconds}");
+        //    |
+        //
+        //    = note: `#[warn(uninlined_format_args)]` on by default
+        //
+        // note: the lint level is defined here
+        //   --> chromium-operator/src/api/chromium_session_handlers.rs:1:9
+        //    |
+        // 1  | #![deny(clippy::uninlined_format_args)]
+        //    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        // let level_and_src = cx.get_lint_level(UNINLINED_FORMAT_ARGS);
+
+        cx.span_lint(UNINLINED_FORMAT_ARGS, span, |lint| {
+            lint.primary_message("variables can be used directly in the `format!` string");
+            lint.help("for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args");
+            lint.span_suggestion(
+                span,
+                "change this to",
+                suggestion,
+                Applicability::MachineApplicable,
+            );
+
+            // // Add notes about lint level similar to clippy
+            // match level_and_src.src {
+            //     LintLevelSource::Default => {
+            //         // let level: &'static str = level_and_src.level.as_str();
+            //         // lint.note(format!("`#[{level}({})]` on by default", UNINLINED_FORMAT_ARGS.name_lower()));
+            //     },
+            //     LintLevelSource::Node { span, .. } => {
+            //         lint.span_note(span, "the lint level is defined here");
+            //     },
+            //     LintLevelSource::CommandLine(_symbol, level) => {
+            //         lint.span_note(span, "the lint level is defined on the command line");
+            //     },
+            // }
         });
     }
 
