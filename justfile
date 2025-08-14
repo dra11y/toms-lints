@@ -1,5 +1,7 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set positional-arguments
+set export
+color := "always"
 
 # Default recipe
 default: help
@@ -13,6 +15,7 @@ build:
   cargo build
 
 # Run tests
+[no-cd]
 test *args="":
   cargo test {{args}}
 
