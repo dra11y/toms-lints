@@ -1,3 +1,70 @@
+mod __private {
+    pub use std::format;
+    pub use std::option::Option;
+
+    pub fn mk_ident(id: &str, _span: Option<()>) -> String {
+        id.to_string()
+    }
+
+    #[derive(Copy, Clone)]
+    pub struct IdentFragmentAdapter<T>(pub T);
+
+    impl<T> IdentFragmentAdapter<T> {
+        pub fn span(&self) -> Option<()> {
+            None
+        }
+    }
+
+    impl<T: std::fmt::Display> std::fmt::Display for IdentFragmentAdapter<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            std::fmt::Display::fmt(&self.0, f)
+        }
+    }
+}
+
+macro_rules! mock_format_ident {
+    ($fmt:expr) => {
+        mock_format_ident_impl!([
+            __private::Option::None,
+            $fmt
+        ])
+    };
+
+    ($fmt:expr, $($rest:tt)*) => {
+        mock_format_ident_impl!([
+            __private::Option::None,
+            $fmt
+        ] $($rest)*)
+    };
+}
+
+macro_rules! mock_format_ident_impl {
+    ([$span:expr, $($fmt:tt)*]) => {
+        __private::mk_ident(
+            &__private::format!($($fmt)*),
+            $span,
+        )
+    };
+
+    ([$span:expr, $($fmt:tt)*] $name:ident = $arg:expr) => {
+        mock_format_ident_impl!([$span, $($fmt)*] $name = $arg,)
+    };
+    ([$span:expr, $($fmt:tt)*] $name:ident = $arg:expr, $($rest:tt)*) => {
+        match __private::IdentFragmentAdapter(&$arg) {
+            arg => mock_format_ident_impl!([$span, $($fmt)*, $name = arg] $($rest)*),
+        }
+    };
+
+    ([$span:expr, $($fmt:tt)*] $arg:expr) => {
+        mock_format_ident_impl!([$span, $($fmt)*] $arg,)
+    };
+    ([$span:expr, $($fmt:tt)*] $arg:expr, $($rest:tt)*) => {
+        match __private::IdentFragmentAdapter(&$arg) {
+            arg => mock_format_ident_impl!([$span, $($fmt)*, arg] $($rest)*),
+        }
+    };
+}
+
 #[macro_use]
 mod simple_tracing_like {
     // Test a few cases from tracing with complex patterns.
@@ -33,6 +100,13 @@ fn main() {
     let d = 3.14159;
     let e = 255u8;
     let ptr = &a as *const i32;
+
+    // Test mock of quote::format_ident! that wrongly renames `my_var_name` as `arg`.
+    let my_var_name = "Test";
+    let patch_name = mock_format_ident!("{}Patch", my_var_name);
+
+    let user_provided_name = "Widget";
+    let generated_ident = mock_format_ident!("Generated{}", user_provided_name);
 
     // Original examples testing tracing-like macro patterns
     info!(name: "test", "This is a test with {:?}", b);
