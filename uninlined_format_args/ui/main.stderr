@@ -9,7 +9,7 @@ LL |     let patch_name = mock_format_ident!("{}Patch", my_var_name);
 help: change this to
    |
 LL -     let patch_name = mock_format_ident!("{}Patch", my_var_name);
-LL +     let patch_name = mock_format_ident!("{my_var_name}Patch");
+LL +     let patch_name = mock_format_ident!("{arg}Patch";
    |
 
 warning: variables can be used directly in the `format!` string
@@ -313,6 +313,3 @@ help: change this to
 LL -     info!("Debug hex: {:x?}", e);
 LL +     info!("Debug hex: {e:x?}");
    |
-
-warning: 24 warnings emitted
-

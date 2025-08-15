@@ -17,7 +17,8 @@ build:
 # Run tests
 [no-cd]
 test *args="":
-  cargo test {{args}}
+  # cargo test {{args}} 2>&1 | grep -v '$message_type' | grep -E '^identifier:'
+  cargo test {{args}} 2>&1 | grep -v '$message_type'
 
 # Run clippy with warnings as errors
 clippy:

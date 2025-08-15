@@ -5,6 +5,7 @@ extern crate rustc_errors;
 extern crate rustc_lint_defs;
 extern crate rustc_middle;
 extern crate rustc_span;
+extern crate rustc_type_ir;
 
 use rustc_ast::{
     Expr, ExprKind, FormatArgPositionKind, FormatArgs, FormatArgsPiece, FormatArgumentKind,
@@ -112,6 +113,7 @@ impl EarlyLintPass for UninlinedFormatArgs {
         };
 
         let mut fixes = Vec::new();
+        let mut manual = false;
 
         for placeholder in format_args.template.iter() {
             let FormatArgsPiece::Placeholder(placeholder) = placeholder else {
@@ -150,11 +152,13 @@ impl EarlyLintPass for UninlinedFormatArgs {
                 continue;
             };
 
-            let variable_name = &segment.ident;
+            let identifier = &segment.ident;
+            manual = identifier.span.from_expansion();
+
             let format_spec = format_placeholder_format_span(placeholder)
                 .and_then(|spec_span| cx.sess().source_map().span_to_snippet(spec_span).ok())
                 .unwrap_or_default();
-            let suggestion = format!("{{{variable_name}{format_spec}}}");
+            let suggestion = format!("{{{identifier}{format_spec}}}");
 
             fixes.push((placeholder_span, suggestion));
             fixes.push((arg_removal_span, String::new()));
@@ -170,7 +174,7 @@ impl EarlyLintPass for UninlinedFormatArgs {
             lint.multipart_suggestion(
                 "change this to",
                 fixes,
-                Applicability::MachineApplicable,
+                if manual { Applicability::HasPlaceholders } else { Applicability::MachineApplicable },
             );
         });
     }
