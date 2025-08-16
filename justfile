@@ -91,7 +91,7 @@ _bless crate_name="":
   fi
   temp_file=$(mktemp)
   cd "{{crate_name}}"
-  cargo test 2>&1 | tee "$temp_file" || true
+  cargo test 2>&1 | grep -v '$message_type' | tee "$temp_file" || true
   just _process_stderr_files "$temp_file"
 
 # Internal: process stderr files from test output

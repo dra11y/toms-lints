@@ -1,37 +1,11 @@
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:106:22
-   |
-LL |     let patch_name = mock_format_ident!("{}Patch", my_var_name);
-   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
-   = note: `#[warn(uninlined_format_args)]` on by default
-help: change this to
-   |
-LL -     let patch_name = mock_format_ident!("{}Patch", my_var_name);
-LL +     let patch_name = mock_format_ident!("{arg}Patch";
-   |
-
-warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:109:27
-   |
-LL |     let generated_ident = mock_format_ident!("Generated{}", user_provided_name);
-   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
-help: change this to
-   |
-LL -     let generated_ident = mock_format_ident!("Generated{}", user_provided_name);
-LL +     let generated_ident = mock_format_ident!("Generated{arg}";
-   |
-
-warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:112:5
+  --> $DIR/main.rs:104:5
    |
 LL |     info!(name: "test", "This is a test with {:?}", b);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+   = note: `#[warn(uninlined_format_args)]` on by default
 help: change this to
    |
 LL -     info!(name: "test", "This is a test with {:?}", b);
@@ -39,7 +13,7 @@ LL +     info!(name: "test", "This is a test with {b:?}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:113:5
+  --> $DIR/main.rs:105:5
    |
 LL |     info!(name: "test", { b }, "This is a test with {}", a);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -52,7 +26,7 @@ LL +     info!(name: "test", { b }, "This is a test with {a}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:114:5
+  --> $DIR/main.rs:106:5
    |
 LL |     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,7 +39,7 @@ LL +     info!(name: "test", target: "test_target", parent: "test_parent", { fie
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:115:5
+  --> $DIR/main.rs:107:5
    |
 LL |     info!({ a, b }, "This is a test with {}", a);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -78,7 +52,7 @@ LL +     info!({ a, b }, "This is a test with {a}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:116:5
+  --> $DIR/main.rs:108:5
    |
 LL | /     info!(
 LL | |         "This is a test with {} and {:?}, with {} several {} placeholders {}",
@@ -94,7 +68,7 @@ LL +         "This is a test with {a} and {b:?}, with {c} several {d} placeholde
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:123:5
+  --> $DIR/main.rs:115:5
    |
 LL |     info!("Display format: {}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -107,7 +81,7 @@ LL +     info!("Display format: {c}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:126:5
+  --> $DIR/main.rs:118:5
    |
 LL |     info!("Debug format: {:?}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -120,7 +94,7 @@ LL +     info!("Debug format: {c:?}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:129:5
+  --> $DIR/main.rs:121:5
    |
 LL |     info!("Scientific lower: {:e}", d);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -133,7 +107,7 @@ LL +     info!("Scientific lower: {d:e}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:132:5
+  --> $DIR/main.rs:124:5
    |
 LL |     info!("Scientific upper: {:E}", d);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -146,7 +120,7 @@ LL +     info!("Scientific upper: {d:E}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:135:5
+  --> $DIR/main.rs:127:5
    |
 LL |     info!("Octal: {:o}", e);
    |     ^^^^^^^^^^^^^^^^^^^^^^^
@@ -159,7 +133,7 @@ LL +     info!("Octal: {e:o}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:138:5
+  --> $DIR/main.rs:130:5
    |
 LL |     info!("Pointer: {:p}", ptr);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -172,7 +146,7 @@ LL +     info!("Pointer: {ptr:p}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:141:5
+  --> $DIR/main.rs:133:5
    |
 LL |     info!("Binary: {:b}", e);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -185,7 +159,7 @@ LL +     info!("Binary: {e:b}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:144:5
+  --> $DIR/main.rs:136:5
    |
 LL |     info!("Hex lower: {:x}", e);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -198,7 +172,7 @@ LL +     info!("Hex lower: {e:x}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:147:5
+  --> $DIR/main.rs:139:5
    |
 LL |     info!("Hex upper: {:X}", e);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -211,7 +185,7 @@ LL +     info!("Hex upper: {e:X}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:150:5
+  --> $DIR/main.rs:142:5
    |
 LL |     info!("Right aligned: {:>10}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -224,7 +198,7 @@ LL +     info!("Right aligned: {c:>10}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:151:5
+  --> $DIR/main.rs:143:5
    |
 LL |     info!("Left aligned: {:<10}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -237,7 +211,7 @@ LL +     info!("Left aligned: {c:<10}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:152:5
+  --> $DIR/main.rs:144:5
    |
 LL |     info!("Center aligned: {:^10}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -250,7 +224,7 @@ LL +     info!("Center aligned: {c:^10}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:153:5
+  --> $DIR/main.rs:145:5
    |
 LL |     info!("Zero padded: {:08}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -263,7 +237,7 @@ LL +     info!("Zero padded: {c:08}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:154:5
+  --> $DIR/main.rs:146:5
    |
 LL |     info!("With sign: {:+}", c);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -276,7 +250,7 @@ LL +     info!("With sign: {c:+}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:155:5
+  --> $DIR/main.rs:147:5
    |
 LL |     info!("Precision: {:.2}", d);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -289,7 +263,7 @@ LL +     info!("Precision: {d:.2}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:156:5
+  --> $DIR/main.rs:148:5
    |
 LL |     info!("Alternate hex: {:#x}", e);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -302,7 +276,7 @@ LL +     info!("Alternate hex: {e:#x}");
    |
 
 warning: variables can be used directly in the `format!` string
-  --> $DIR/main.rs:157:5
+  --> $DIR/main.rs:149:5
    |
 LL |     info!("Debug hex: {:x?}", e);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -313,3 +287,134 @@ help: change this to
 LL -     info!("Debug hex: {:x?}", e);
 LL +     info!("Debug hex: {e:x?}");
    |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:160:22
+   |
+LL |     let mock_ident = mock_format_ident!("{}{ident_second}{}", ident_first, ident_third);
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     let mock_ident = mock_format_ident!("{}{ident_second}{}", ident_first, ident_third);
+LL +     let mock_ident = mock_format_ident!("{ident_first}{ident_second}{ident_third}");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:165:23
+   |
+LL |     let mock_ident2 = mock_format_ident!("{}", with_comma);
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     let mock_ident2 = mock_format_ident!("{}", with_comma);
+LL +     let mock_ident2 = mock_format_ident!("{with_comma}");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:166:23
+   |
+LL |     let mock_ident3 = mock_format_ident!("{}{}", "literal,string", ident_first);
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     let mock_ident3 = mock_format_ident!("{}{}", "literal,string", ident_first);
+LL +     let mock_ident3 = mock_format_ident!("literal,string{ident_first}");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:169:23
+   |
+LL |     let mock_ident4 = mock_format_ident!("{}", r#"raw"string"#);
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     let mock_ident4 = mock_format_ident!("{}", r#"raw"string"#);
+LL +     let mock_ident4 = mock_format_ident!("raw/"string");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:175:23
+   |
+LL |       let mock_ident6 = mock_format_ident!(
+   |  _______________________^
+LL | |         "{}{}{}",
+LL | |         "literal_string",
+LL | |         format!("literal_string{with_comma}"),
+LL | |         ident_third
+LL | |     );
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     let mock_ident6 = mock_format_ident!(
+LL -         "{}{}{}",
+LL -         "literal_string",
+LL -         format!("literal_string{with_comma}"),
+LL -         ident_third
+LL -     );
+LL +     let mock_ident6 = mock_format_ident!("literal_string{}{ident_third}", format!("literal_string{with_comma}"));
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:203:5
+   |
+LL |     mock_format_ident!("{}", "literal,with,commas");
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     mock_format_ident!("{}", "literal,with,commas");
+LL +     mock_format_ident!("literal,with,commas");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:206:5
+   |
+LL |     mock_format_ident!("{}", "literal/"with/"quotes");
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     mock_format_ident!("{}", "literal/"with/"quotes");
+LL +     mock_format_ident!("literal/"with/"quotes");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:209:5
+   |
+LL |     mock_format_ident!("{}", "complex/"literal,with/"everything");
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     mock_format_ident!("{}", "complex/"literal,with/"everything");
+LL +     mock_format_ident!("complex/"literal,with/"everything");
+   |
+
+warning: variables can be used directly in the `format!` string
+  --> $DIR/main.rs:212:5
+   |
+LL |     mock_format_ident!("{}", r#"raw"string"with"quotes"#);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+LL -     mock_format_ident!("{}", r#"raw"string"with"quotes"#);
+LL +     mock_format_ident!("raw/"string/"with/"quotes");
+   |
+
+warning: 31 warnings emitted
+

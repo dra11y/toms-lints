@@ -6,7 +6,7 @@ mod __private {
         id.to_string()
     }
 
-    #[derive(Copy, Clone)]
+    #[derive(Copy, Clone, Debug)]
     pub struct IdentFragmentAdapter<T>(pub T);
 
     impl<T> IdentFragmentAdapter<T> {
@@ -101,14 +101,6 @@ fn main() {
     let e = 255u8;
     let ptr = &a as *const i32;
 
-    // Test mock of quote::format_ident! that wrongly renames `my_var_name` as `arg`.
-    let my_var_name = "Test";
-    let patch_name = mock_format_ident!("{}Patch", my_var_name);
-
-    let user_provided_name = "Widget";
-    let generated_ident = mock_format_ident!("Generated{}", user_provided_name);
-
-    // Original examples testing tracing-like macro patterns
     info!(name: "test", "This is a test with {:?}", b);
     info!(name: "test", { b }, "This is a test with {}", a);
     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
@@ -160,4 +152,93 @@ fn main() {
     info!({ a }, "This is a test with {b:?}");
     info!({ a, b }, "This is a test");
     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {a}");
+
+    // Test mock of quote::format_ident! that wrongly renames vars to `arg`.
+    let ident_first = "First";
+    let ident_second = "Second";
+    let ident_third = "Third";
+    let mock_ident = mock_format_ident!("{}{ident_second}{}", ident_first, ident_third);
+
+    // Additional edge case tests for macro expansion parsing
+    let with_comma = "has,comma";
+    let with_quote = "has\"quote";
+    let mock_ident2 = mock_format_ident!("{}", with_comma);
+    let mock_ident3 = mock_format_ident!("{}{}", "literal,string", ident_first);
+
+    // Test with raw strings (should potentially fail current parsing)
+    let mock_ident4 = mock_format_ident!("{}", r#"raw"string"#);
+
+    // Test with function calls as arguments
+    let mock_ident5 = mock_format_ident!("{}", format!("nested"));
+
+    // Test multiple complex arguments
+    let mock_ident6 = mock_format_ident!(
+        "{}{}{}",
+        "literal_string",
+        format!("literal_string{with_comma}"),
+        ident_third
+    );
+
+    // Define a test struct and function for the edge cases
+    #[derive(Debug)]
+    struct SomeStruct {
+        field1: String,
+        field2: Vec<i32>,
+        field3: i32,
+    }
+
+    fn some_function(a: i32, b: i32, c: i32) -> i32 {
+        a + b + c
+    }
+
+    // Additional edge case variables
+    let var1 = "test";
+    let var2 = 42;
+    let var3 = "with,comma";
+    let var4 = "with\"quote";
+    let var5 = "with\\backslash";
+    let complex_var = vec![1, 2, 3];
+
+    // 1. String literals with commas inside them
+    mock_format_ident!("{}", "literal,with,commas");
+
+    // 2. String literals with escaped quotes
+    mock_format_ident!("{}", "literal\"with\"quotes");
+
+    // 3. String literals with both escaped quotes and commas
+    mock_format_ident!("{}", "complex\"literal,with\"everything");
+
+    // 4. Raw string literals
+    mock_format_ident!("{}", r#"raw"string"with"quotes"#);
+
+    // 5. Complex expressions as arguments
+    mock_format_ident!("{}", format!("nested,format,call"));
+
+    // 6. Function calls with commas in arguments
+    mock_format_ident!("{}", some_function(1, 2, 3));
+
+    // 7. Macro calls as arguments
+    mock_format_ident!("{:?}", vec![1, 2, 3]);
+
+    // 8. Complex nested structures
+    mock_format_ident!(
+        "{:?}",
+        SomeStruct {
+            field1: "value,with,comma".to_string(),
+            field2: vec![1, 2, 3],
+            field3: 42,
+        }
+    );
+
+    // 9. Multiple format placeholders with complex args
+    mock_format_ident!(
+        "{}{:?}{:?}",
+        format!("first,arg"),
+        vec![1, 2, 3],
+        SomeStruct {
+            field1: "test,value".to_string(),
+            field2: vec![4, 5],
+            field3: 100,
+        }
+    );
 }
