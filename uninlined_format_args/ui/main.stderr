@@ -1,115 +1,68 @@
-warning: 
-  --> $DIR/main.rs:2:16
+warning: nested structure is 3 levels deep (max: 3)
+  --> $DIR/main.rs:19:5
    |
-LL |     let x = 42; // This should trigger the lint
-   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | /     if value > 0 {
+LL | |         if value < 100 {
+LL | |             if value % 2 == 0 {
+LL | |                 println!("Level 3 - should lint");
+...  |
+LL | |     }
+   | |_____^
    |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-   = note: `#[warn(eol_comments)]` on by default
-help: remove EOL comment
-   |
-LL -     let x = 42; // This should trigger the lint
-LL +     let x = 42;
-   |
+   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+   = note: `#[warn(nesting_too_deep)]` on by default
 
-warning: 
-  --> $DIR/main.rs:3:16
+warning: nested structure is 3 levels deep (max: 3)
+  --> $DIR/main.rs:28:5
    |
-LL |     let y = 10; // Another end-of-line comment
-   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | /     if value > 0 {
+LL | |         if value < 100 {
+LL | |             if value % 2 == 0 {
+LL | |                 if value > 10 {
+...  |
+LL | |     }
+   | |_____^
    |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: remove EOL comment
-   |
-LL -     let y = 10; // Another end-of-line comment
-LL +     let y = 10;
-   |
+   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
 
-warning: 
-  --> $DIR/main.rs:6:19
+warning: nested structure is 3 levels deep (max: 3)
+  --> $DIR/main.rs:57:5
    |
-LL |     let z = x + y; // But this comment is not
-   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | /     if let Some(x) = opt1 {
+LL | |         if let Some(y) = opt2 {
+LL | |             if let Some(z) = opt3 {
+LL | |                 println!("Level 3 - should lint: {} {} {}", x, y, z);
+...  |
+LL | |     }
+   | |_____^
    |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: remove EOL comment
-   |
-LL -     let z = x + y; // But this comment is not
-LL +     let z = x + y;
-   |
+   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
 
-warning: 
-  --> $DIR/main.rs:15:35
+warning: nested structure is 3 levels deep (max: 3)
+  --> $DIR/main.rs:84:5
    |
-LL |         println!("y is positive"); // This should trigger the lint
-   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | /     if let Ok(x) = res1 {
+LL | |         if let Ok(y) = res2 {
+LL | |             if let Ok(z) = res3 {
+LL | |                 println!("Level 3 - should lint: {} {} {}", x, y, z);
+...  |
+LL | |     }
+   | |_____^
    |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: remove EOL comment
-   |
-LL -         println!("y is positive"); // This should trigger the lint
-LL +         println!("y is positive");
-   |
+   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
 
-warning: 
-  --> $DIR/main.rs:20:30
+warning: nested structure is 3 levels deep (max: 3)
+  --> $DIR/main.rs:99:5
    |
-LL |         42 => "magic number", /* block comment should not be here */
-   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | /     if value > 0 {
+LL | |         if let Some(x) = option {
+LL | |             if let Ok(y) = result {
+LL | |                 println!("Mixed level 3 - should lint: {} {} {}", value, x, y);
+...  |
+LL | |     }
+   | |_____^
    |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: move block comment to its own line
-   |
-LL ~         42 => "magic number", 
-LL ~  /* block comment should not be here */
-   |
+   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
 
-warning: 
-  --> $DIR/main.rs:28:12
-   |
-LL |     x: i32, // Field comment - should trigger lint
-   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: remove EOL comment
-   |
-LL -     x: i32, // Field comment - should trigger lint
-LL +     x: i32,
-   |
-
-warning: 
-  --> $DIR/main.rs:29:12
-   |
-LL |     y: i32, // Another field comment - should trigger lint
-   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: remove EOL comment
-   |
-LL -     y: i32, // Another field comment - should trigger lint
-LL +     y: i32,
-   |
-
-warning: 
-  --> $DIR/main.rs:40:60
-   |
-LL |         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
-   |                                                            ^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: end-of-line comments should be moved or removed
-   = help: consider removing or moving this comment
-help: remove EOL comment
-   |
-LL -         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
-LL +         ((self.x * self.x + self.y * self.y) as f64).sqrt()
-   |
-
-warning: 8 warnings emitted
+warning: 5 warnings emitted
 
