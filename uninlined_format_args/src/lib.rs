@@ -14,7 +14,7 @@ const HELP_MESSAGE: &str = "for further information visit https://rust-lang.gith
 
 use rustc_ast::{
     Expr, ExprKind, FormatArgPositionKind, FormatArgs, FormatArgsPiece, FormatArgumentKind,
-    FormatPlaceholder, MacCall,
+    FormatPlaceholder,
     token::{Delimiter, IdentIsRaw, LitKind, TokenKind},
     tokenstream::{TokenStream, TokenTree},
 };
@@ -170,7 +170,7 @@ impl EarlyLintPass for UninlinedFormatArgs {
                         callsite,
                         CHANGE_MESSAGE,
                         rewritten,
-                        Applicability::MaybeIncorrect,
+                        Applicability::MachineApplicable,
                     );
                 });
                 return;

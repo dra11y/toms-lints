@@ -2,36 +2,41 @@
 #![feature(let_chains)]
 #![warn(unused_extern_crates)]
 
+extern crate rustc_errors;
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use rustc_errors::Applicability;
 use rustc_hir::Item;
 use rustc_lint::{LateContext, LateLintPass, LintContext};
 use rustc_span::BytePos;
 
 dylint_linting::declare_late_lint! {
     /// ### What it does
-    /// Checks for comments at the end of lines with code and suggests moving them
-    /// to their own line above the code for better readability.
+    /// Checks for comments at the end of lines with code.
     ///
     /// ### Why is this bad?
-    /// End-of-line comments make code harder to read, especially with longer lines.
-    /// They also make it difficult to format code consistently and may be missed
-    /// when scanning code. Comments on their own line are easier to read.
+    /// End-of-line comments are harder to read, especially on longer lines.
+    /// AI LLMs are notorious for generating unhelpful EOL comments. This lint gets rid of them.
     ///
     /// ### Example
     /// ```rust
-    /// let x = 42; // The Answer to the Ultimate Question of Life, The Universe, and Everything
+    /// let x = 42; // changed to 42
     /// ```
     ///
     /// Use instead:
+    /// ```rust
+    /// let x = 42;
+    /// ```
+    /// or:
+    ///
     /// ```rust
     /// // The Answer to the Ultimate Question of Life, The Universe, and Everything
     /// let x = 42;
     /// ```
     pub EOL_COMMENTS,
     Warn,
-    "end-of-line comments should be moved to their own line above the code"
+    "end-of-line comments should be moved or removed"
 }
 
 impl<'tcx> LateLintPass<'tcx> for EolComments {
@@ -63,6 +68,7 @@ impl<'tcx> LateLintPass<'tcx> for EolComments {
                     escaped = false;
                     continue;
                 }
+
                 match c {
                     '\\' if in_string || in_char => {
                         escaped = true;
@@ -84,13 +90,52 @@ impl<'tcx> LateLintPass<'tcx> for EolComments {
                         if line[..i].trim().is_empty() {
                             break;
                         }
-                        let lo = span.lo() + BytePos((base + i) as u32);
+
+                        // Find the start of whitespace before the comment
+                        let mut whitespace_start = i;
+                        while whitespace_start > 0 {
+                            let prev_char = line.chars().nth(whitespace_start - 1).unwrap_or('\0');
+                            if prev_char.is_whitespace() {
+                                whitespace_start -= 1;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        let lo = span.lo() + BytePos((base + whitespace_start) as u32);
                         let hi = span.lo() + BytePos((base + line.len()) as u32);
                         let sub = span.with_lo(lo).with_hi(hi);
-                        cx.lint(EOL_COMMENTS, |lint| {
-                            lint.span(sub)
-                                .note("end-of-line comment should be moved to its own line above the code")
-                                .help("consider moving this comment to its own line above the code");
+
+                        // Check if this is a /* block comment
+                        let is_block_comment = next == '*';
+
+                        cx.span_lint(EOL_COMMENTS, sub, |lint| {
+                            lint.note(EOL_COMMENTS.desc)
+                                .help("consider removing or moving this comment");
+
+                            if is_block_comment {
+                                // For block comments, suggest adding a newline before the comment
+                                let whitespace_before = &line[whitespace_start..i];
+                                let comment_text = &line[i..];
+                                let suggestion = format!(
+                                    "{}\n{}{}",
+                                    whitespace_before, whitespace_before, comment_text
+                                );
+                                lint.span_suggestion_verbose(
+                                    sub,
+                                    "move block comment to its own line",
+                                    suggestion,
+                                    Applicability::MachineApplicable,
+                                );
+                            } else {
+                                // For line comments, suggest removing the comment entirely
+                                lint.span_suggestion_verbose(
+                                    sub,
+                                    "remove EOL comment",
+                                    "",
+                                    Applicability::MachineApplicable,
+                                );
+                            }
                         });
                         break;
                     }
