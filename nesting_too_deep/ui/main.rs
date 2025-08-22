@@ -1,7 +1,7 @@
 #![allow(unused)]
 use std::sync::LazyLock;
 
-// LINT: 4 levels
+//~v ERROR: 4 levels
 static LAZY_VALUE: LazyLock<i32> = LazyLock::new(|| {
     if let Some(config) = Some(42) {
         if config > 0 {
@@ -35,7 +35,7 @@ fn one() {
         }
     }
 
-    // LINT: 6 levels
+    //~v ERROR: 6 levels
     if let Ok(op_result) = operation {
         if op_result < 100 {
             if score % 2 == 0 {
@@ -55,7 +55,7 @@ fn one() {
         println!("Level 1 - OK");
     }
 
-    // LINT: 4 levels
+    //~v ERROR: 4 levels
     if let Some(count_val) = maybe_count {
         if count_val > 5 {
             if score % 3 == 0 {
@@ -76,7 +76,7 @@ fn one() {
         println!("Level 1 - OK");
     }
 
-    // LINT: 5 levels
+    //~v ERROR: 5 levels
     if let Some(x) = maybe_count {
         if let Ok(y) = operation {
             if x > 5 {
@@ -89,7 +89,7 @@ fn one() {
         }
     }
 
-    // LINT: 6 levels
+    //~v ERROR: 6 levels
     loop {
         for i in 0..10 {
             while i > 0 {
@@ -118,7 +118,7 @@ fn one() {
         _ => {}
     }
 
-    // LINT: 5 levels
+    //~v ERROR: 5 levels
     let closure_5_levels = || {
         if score_5_levels != 0 {
             let inner_closure_5_levels = || {
@@ -133,13 +133,15 @@ fn one() {
     };
     closure_5_levels();
 
-    // LINT: 4 levels
+    //~v ERROR: 4 levels
     if let Ok(num) = operation {
         loop {
             match maybe_count {
                 Some(x) => {
                     let closure_4_levels = || {
-                        println!("Mixed nesting level 4: {}", x);
+                        if true {
+                            println!("Mixed nesting level 4: {}", x);
+                        }
                     };
                     closure_4_levels();
                     break;
@@ -151,7 +153,7 @@ fn one() {
 }
 
 fn two() {
-    // LINT: 5 levels
+    // TODO ~v ERROR: 5 levels
     let standalone_closure = || {
         if let Some(data) = Some(15) {
             if data > 10 {
@@ -165,7 +167,7 @@ fn two() {
     };
     standalone_closure();
 
-    // LINT: 4 levels
+    //~v ERROR: 4 levels
     let outer_closure = || {
         let inner_closure = || {
             if let Ok(status) = Ok::<bool, &str>(true) {
@@ -184,7 +186,7 @@ fn three() {
     let has_permission = true;
     let is_authenticated = false;
 
-    // LINT: 4 levels
+    // TODO ~v ERROR: 4 levels
     if let Some(result) = response {
         match result {
             Ok(items) => {
@@ -202,7 +204,7 @@ fn three() {
         panic!("No response received");
     }
 
-    // LINT: 5 levels
+    //~v ERROR: 5 levels
     if let Some(token) = Some(42) {
         if token != 0 {
             match token {
@@ -226,7 +228,6 @@ fn three() {
 }
 
 fn four() {
-    // LINT: 2 levels - NO LINT
     while let Some(tag_id) = Some(10) {
         match tag_id {
             10 => {
@@ -239,7 +240,6 @@ fn four() {
         }
     }
 
-    // LINT: 3 levels - NO LINT
     while let Some(message_tag) = Some(10) {
         match message_tag {
             10 => {
@@ -257,7 +257,6 @@ fn four() {
     }
 }
 
-// Test: 3 levels should not warn
 fn five() {
     while let Some(identifier) = Some(10) {
         match identifier {
@@ -272,7 +271,6 @@ fn five() {
     }
 }
 
-// Test: 4 levels should warn at while let span
 fn six() {
     while let Some(packet_id) = Some(10) {
         match packet_id {

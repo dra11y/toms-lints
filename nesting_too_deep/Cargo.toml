@@ -6,7 +6,7 @@ description = "Lint for nested if/then/else and other branching that is too many
 edition = "2024"
 publish = false
 
-# https://docs.rs/dylint_testing/latest/dylint_testing/
+# https://docs.rs/dylint_uitesting/latest/dylint_uitesting/
 
 [lib]
 crate-type = ["cdylib"]
@@ -20,7 +20,7 @@ dylint_linting.workspace = true
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
-dylint_testing.workspace = true
+dylint_uitesting.workspace = true
 
 [package.metadata.rust-analyzer]
 rustc_private = true
