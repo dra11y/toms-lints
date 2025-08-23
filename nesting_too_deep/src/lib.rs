@@ -9,10 +9,10 @@ use std::collections::HashSet;
 
 use dylint_linting::config_or_default;
 use rustc_hir::{
-    Block, Body, Expr, ExprKind, FnDecl, ImplItemKind, ItemKind, LoopSource, MatchSource, Node,
-    StmtKind, TraitItemKind, def_id::LocalDefId, intravisit::FnKind,
+    Block, Body, Expr, ExprKind, FnDecl, HirId, ImplItemKind, ItemKind, LoopSource, MatchSource,
+    Node, StmtKind, TraitItemKind, def_id::LocalDefId, intravisit::FnKind,
 };
-use rustc_lint::{LateContext, LateLintPass, LintContext};
+use rustc_lint::{LateContext, LateLintPass, Level, LintContext};
 use rustc_span::{ExpnKind, Span};
 
 /// Default maximum nesting levels
@@ -124,7 +124,7 @@ impl Default for Config {
 /// Lint for detecting nesting that is too deep
 pub struct NestingTooDeep {
     config: Config,
-    current_span: Option<Span>,
+    outer_span: Option<Span>,
     max_depth: usize,
 }
 
@@ -132,7 +132,7 @@ impl Default for NestingTooDeep {
     fn default() -> Self {
         Self {
             config: config_or_default(env!("CARGO_PKG_NAME")),
-            current_span: None,
+            outer_span: None,
             max_depth: 0,
         }
     }
@@ -192,13 +192,13 @@ impl<'tcx> LateLintPass<'tcx> for NestingTooDeep {
         def_id: LocalDefId,
     ) {
         // For closures, check if they should be skipped (function body context)
-        if matches!(fn_kind, FnKind::Closure) {
-            if self.is_closure_in_body(cx, fn_kind, body, _span, def_id) {
-                // println!("🚫 SKIPPING function body closure in check_fn");
-                return;
-            }
-            // println!("✅ PROCESSING static context closure (LazyLock) in check_fn");
+        if matches!(fn_kind, FnKind::Closure)
+            && self.is_closure_in_body(cx, fn_kind, body, _span, def_id)
+        {
+            // println!("🚫 SKIPPING function body closure in check_fn");
+            return;
         }
+        // println!("✅ PROCESSING static context closure (LazyLock) in check_fn");
 
         let name = match fn_kind {
             FnKind::ItemFn(ident, _generics, _fn_header) => {
@@ -253,14 +253,16 @@ impl NestingTooDeep {
                     ItemKind::Fn { .. } => return true,
                     _ => {}
                 },
-                Node::ImplItem(impl_item) => match impl_item.kind {
-                    ImplItemKind::Fn(..) => return true,
-                    _ => {}
-                },
-                Node::TraitItem(trait_item) => match trait_item.kind {
-                    TraitItemKind::Fn(..) => return true,
-                    _ => {}
-                },
+                Node::ImplItem(impl_item) => {
+                    if let ImplItemKind::Fn(..) = impl_item.kind {
+                        return true;
+                    }
+                }
+                Node::TraitItem(trait_item) => {
+                    if let TraitItemKind::Fn(..) = trait_item.kind {
+                        return true;
+                    }
+                }
                 _ => {}
             }
 
@@ -300,17 +302,16 @@ impl NestingTooDeep {
     }
 
     fn set_outer_span(&mut self, span: Span) {
-        if let Some(current_span) = self.current_span
-            && !span.contains(current_span)
+        if self
+            .outer_span
+            .is_none_or(|current_span| span.contains(current_span))
         {
-            return;
+            self.outer_span = Some(span);
         }
-        self.current_span = Some(span);
     }
 
     /// Recursively check expressions for nesting constructs
     fn check_expr_for_nesting(&mut self, cx: &LateContext<'_>, expr: &Expr<'_>, depth: usize) {
-        // let expr = expr.peel_drop_temps();
         let kind_kind = ExprKindKind::from(expr.kind);
 
         'block: {
@@ -329,8 +330,82 @@ impl NestingTooDeep {
             }
 
             match expr.kind {
-                ExprKind::If(_expr, then_expr, else_expr) => {
+                ExprKind::If(_if_expr, then_expr, else_expr) => {
                     self.set_outer_span(expr.span);
+
+                    const MAX_ITEMS: usize = 10;
+                    const ELSE_MORE_THAN_THEN_MIN: usize = 6;
+                    const ELSE_MORE_THAN_THEN_RATIO: f64 = 2.0;
+
+                    enum ThenElseReason {
+                        ThenTooMany,
+                        ElseTooMany,
+                        ThenLargerThanElse,
+                    }
+
+                    impl ThenElseReason {
+                        fn message(&self, then_items: usize, else_items: usize) -> String {
+                            match self {
+                                ThenElseReason::ThenTooMany => {
+                                    format!(
+                                        "if 'then' block has too many items: {then_items} (max: {MAX_ITEMS})"
+                                    )
+                                }
+                                ThenElseReason::ElseTooMany => {
+                                    format!(
+                                        "if 'else' block has too many items: {else_items} (max: {MAX_ITEMS})"
+                                    )
+                                }
+                                ThenElseReason::ThenLargerThanElse => {
+                                    format!(
+                                        "if 'then' block has significantly more items ({then_items}) than 'else' block ({else_items})"
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    let then_items = if let ExprKind::Block(block, _label) = then_expr.kind {
+                        block.stmts.len() + if block.expr.is_some() { 1 } else { 0 }
+                    } else {
+                        1
+                    };
+
+                    let else_items = else_expr
+                        .map(|els| {
+                            if let ExprKind::Block(block, _label) = els.kind {
+                                block.stmts.len() + if block.expr.is_some() { 1 } else { 0 }
+                            } else {
+                                1
+                            }
+                        })
+                        .unwrap_or(0);
+
+                    let reason = if else_items > ELSE_MORE_THAN_THEN_MIN
+                        && then_items as f64 > else_items as f64 * ELSE_MORE_THAN_THEN_RATIO
+                    {
+                        Some(ThenElseReason::ThenLargerThanElse)
+                    } else if then_items > 10 {
+                        Some(ThenElseReason::ThenTooMany)
+                    } else if else_items > 10 {
+                        Some(ThenElseReason::ElseTooMany)
+                    } else {
+                        None
+                    };
+
+                    if let Some(reason) = reason
+                        && Level::Allow
+                            != cx
+                                .tcx
+                                .lint_level_at_node(NESTING_TOO_DEEP, expr.hir_id)
+                                .level
+                    {
+                        cx.span_lint(NESTING_TOO_DEEP, expr.span, |lint| {
+                            lint.primary_message(reason.message(then_items, else_items))
+                                .help(HELP_MESSAGE);
+                        });
+                    }
+
                     self.check_expr_for_nesting(cx, then_expr.peel_blocks(), depth + 1);
                     if let Some(else_expr) = else_expr {
                         self.check_expr_for_nesting(cx, else_expr.peel_blocks(), depth + 1);
@@ -364,7 +439,7 @@ impl NestingTooDeep {
                     for arm in arms {
                         // self.print_span(cx, &format!("MATCH ARM depth={depth}"), arm.span);
                         // Don't count match itself as a level of nesting
-                        self.check_expr_for_nesting(cx, &arm.body, depth);
+                        self.check_expr_for_nesting(cx, arm.body, depth);
                     }
                 }
                 ExprKind::Closure(closure) => {
@@ -421,13 +496,13 @@ impl NestingTooDeep {
 
         if depth == 0 {
             if self.max_depth > self.config.max_depth
-                && let Some(span) = self.current_span
+                && let Some(span) = self.outer_span
+                && Level::Allow
+                    != cx
+                        .tcx
+                        .lint_level_at_node(NESTING_TOO_DEEP, expr.hir_id)
+                        .level
             {
-                // println!(
-                //     "    EMIT: max_depth={} {}",
-                //     self.max_depth,
-                //     self.snippet_collapsed(cx, span)
-                // );
                 cx.span_lint(NESTING_TOO_DEEP, span, |lint| {
                     lint.primary_message(format!(
                         "nested structure is {} levels deep (max: {})",
@@ -438,7 +513,7 @@ impl NestingTooDeep {
             }
 
             // println!("    CLEAR current_span");
-            self.current_span = None;
+            self.outer_span = None;
             self.max_depth = 0;
         }
     }
