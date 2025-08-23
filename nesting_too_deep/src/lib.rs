@@ -18,8 +18,7 @@ use rustc_span::{ExpnKind, Span};
 /// Default maximum nesting levels
 const DEFAULT_MAX_DEPTH: usize = 3;
 
-const HELP_MESSAGE: &str =
-    "consider using early returns, guard clauses, or extracting functions to reduce nesting";
+const HELP_MESSAGE: &str = "use early returns and guard clauses to reduce nesting";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExprKindKind {
@@ -300,10 +299,13 @@ impl NestingTooDeep {
         println!("{label} {}", self.snippet(cx, span));
     }
 
-    fn set_outer_span_if_unset(&mut self, span: Span) {
-        if self.current_span.is_none() {
-            self.current_span = Some(span);
+    fn set_outer_span(&mut self, span: Span) {
+        if let Some(current_span) = self.current_span
+            && !span.contains(current_span)
+        {
+            return;
         }
+        self.current_span = Some(span);
     }
 
     /// Recursively check expressions for nesting constructs
@@ -328,20 +330,29 @@ impl NestingTooDeep {
 
             match expr.kind {
                 ExprKind::If(_expr, then_expr, else_expr) => {
-                    self.set_outer_span_if_unset(expr.span);
+                    self.set_outer_span(expr.span);
                     self.check_expr_for_nesting(cx, then_expr.peel_blocks(), depth + 1);
                     if let Some(else_expr) = else_expr {
                         self.check_expr_for_nesting(cx, else_expr.peel_blocks(), depth + 1);
                     }
                 }
-                ExprKind::Loop(block, _label, loop_source, _span) => {
-                    self.set_outer_span_if_unset(expr.span);
+                ExprKind::Loop(block, _label, loop_source, span) => {
                     let depth = match loop_source {
                         // While desugars to an extra ExprKind::If
                         LoopSource::While => depth,
                         LoopSource::Loop => depth + 1,
-                        LoopSource::ForLoop => depth + 1,
+                        LoopSource::ForLoop => {
+                            // let for_loop = self.snippet(cx, expr.span);
+                            // if for_loop.contains("(server_id, snapshot)") {
+                            //     println!(
+                            //         "FOR LOOP! SELF CURRENT SPAN: {:?}   EXPR SPAN: {:?}",
+                            //         self.current_span, expr.span
+                            //     );
+                            // }
+                            depth + 1
+                        }
                     };
+                    self.set_outer_span(expr.span);
                     self.check_block_for_nesting(cx, block, depth);
                 }
                 ExprKind::DropTemps(inner_expr) => {
@@ -349,7 +360,7 @@ impl NestingTooDeep {
                     self.check_expr_for_nesting(cx, inner_expr, depth);
                 }
                 ExprKind::Match(expr, arms, match_source) => {
-                    self.set_outer_span_if_unset(expr.span);
+                    self.set_outer_span(expr.span);
                     for arm in arms {
                         // self.print_span(cx, &format!("MATCH ARM depth={depth}"), arm.span);
                         // Don't count match itself as a level of nesting
@@ -357,7 +368,7 @@ impl NestingTooDeep {
                     }
                 }
                 ExprKind::Closure(closure) => {
-                    self.set_outer_span_if_unset(expr.span);
+                    self.set_outer_span(expr.span);
                     let body_expr = cx.tcx.hir_body(closure.body).value;
                     let kind_kind = ExprKindKind::from(body_expr.kind);
                     // println!("CLOSURE! {kind_kind} {}", self.snippet(cx, expr.span));
@@ -443,7 +454,7 @@ impl NestingTooDeep {
 
             if let StmtKind::Let(local) = &stmt.kind {
                 // println!("LET EXPR: OUTER SPAN: {:?}", self.current_span);
-                self.set_outer_span_if_unset(local.span);
+                self.set_outer_span(local.span);
 
                 if let Some(init_expr) = &local.init {
                     self.check_expr_for_nesting(cx, init_expr, depth);
