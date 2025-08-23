@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod __private {
     pub use std::format;
     pub use std::option::Option;
@@ -101,51 +103,72 @@ fn main() {
     let e = 255u8;
     let ptr = &a as *const i32;
 
+    //~v uninlined_format_args
     info!(name: "test", "This is a test with {:?}", b);
+    //~v uninlined_format_args
     info!(name: "test", { b }, "This is a test with {}", a);
+    //~v uninlined_format_args
     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
+    //~v uninlined_format_args
     info!({ a, b }, "This is a test with {}", a);
+    //~v uninlined_format_args
     info!(
         "This is a test with {} and {:?}, with {} several {} placeholders {}",
         a, b, c, d, e
     );
 
     // Additional format variant examples
-    // Display format (default)
+    //~v uninlined_format_args
     info!("Display format: {}", c);
 
     // Debug format
+    //~v uninlined_format_args
     info!("Debug format: {:?}", c);
 
     // Scientific notation (lowercase)
+    //~v uninlined_format_args
     info!("Scientific lower: {:e}", d);
 
     // Scientific notation (uppercase)
+    //~v uninlined_format_args
     info!("Scientific upper: {:E}", d);
 
     // Octal format
+    //~v uninlined_format_args
     info!("Octal: {:o}", e);
 
     // Pointer format
+    //~v uninlined_format_args
     info!("Pointer: {:p}", ptr);
 
     // Binary format
+    //~v uninlined_format_args
     info!("Binary: {:b}", e);
 
     // Hexadecimal (lowercase)
+    //~v uninlined_format_args
     info!("Hex lower: {:x}", e);
 
     // Hexadecimal (uppercase)
+    //~v uninlined_format_args
     info!("Hex upper: {:X}", e);
 
     // Complex format options
+    //~v uninlined_format_args
     info!("Right aligned: {:>10}", c);
+    //~v uninlined_format_args
     info!("Left aligned: {:<10}", c);
+    //~v uninlined_format_args
     info!("Center aligned: {:^10}", c);
+    //~v uninlined_format_args
     info!("Zero padded: {:08}", c);
+    //~v uninlined_format_args
     info!("With sign: {:+}", c);
+    //~v uninlined_format_args
     info!("Precision: {:.2}", d);
+    //~v uninlined_format_args
     info!("Alternate hex: {:#x}", e);
+    //~v uninlined_format_args
     info!("Debug hex: {:x?}", e);
 
     // Already inlined (should not lint)
@@ -157,21 +180,26 @@ fn main() {
     let ident_first = "First";
     let ident_second = "Second";
     let ident_third = "Third";
+    //~v uninlined_format_args
     let mock_ident = mock_format_ident!("{}{ident_second}{}", ident_first, ident_third);
 
     // Additional edge case tests for macro expansion parsing
     let with_comma = "has,comma";
     let with_quote = "has\"quote";
+    //~v uninlined_format_args
     let mock_ident2 = mock_format_ident!("{}", with_comma);
+    //~v uninlined_format_args
     let mock_ident3 = mock_format_ident!("{}{}", "literal,string", ident_first);
 
-    // Test with raw strings (should potentially fail current parsing)
+    // Test with raw strings
+    //~v uninlined_format_args
     let mock_ident4 = mock_format_ident!("{}", r#"raw"string"#);
 
     // Test with function calls as arguments
     let mock_ident5 = mock_format_ident!("{}", format!("nested"));
 
     // Test multiple complex arguments
+    //~v uninlined_format_args
     let mock_ident6 = mock_format_ident!(
         "{}{}{}",
         "literal_string",
@@ -200,15 +228,19 @@ fn main() {
     let complex_var = vec![1, 2, 3];
 
     // 1. String literals with commas inside them
+    //~v uninlined_format_args
     mock_format_ident!("{}", "literal,with,commas");
 
     // 2. String literals with escaped quotes
+    //~v uninlined_format_args
     mock_format_ident!("{}", "literal\"with\"quotes");
 
     // 3. String literals with both escaped quotes and commas
+    //~v uninlined_format_args
     mock_format_ident!("{}", "complex\"literal,with\"everything");
 
     // 4. Raw string literals
+    //~v uninlined_format_args
     mock_format_ident!("{}", r#"raw"string"with"quotes"#);
 
     // 5. Complex expressions as arguments

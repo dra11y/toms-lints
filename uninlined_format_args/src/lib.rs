@@ -625,5 +625,5 @@ const fn token_kind_to_static_str(kind: &TokenKind) -> Option<&'static str> {
 
 #[test]
 fn ui() {
-    dylint_testing::ui_test(env!("CARGO_PKG_NAME"), "ui");
+    dylint_uitesting::ui_test(env!("CARGO_PKG_NAME"), "ui");
 }

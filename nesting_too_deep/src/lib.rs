@@ -300,16 +300,16 @@ impl NestingTooDeep {
         println!("{label} {}", self.snippet(cx, span));
     }
 
+    fn set_outer_span_if_unset(&mut self, span: Span) {
+        if self.current_span.is_none() {
+            self.current_span = Some(span);
+        }
+    }
+
     /// Recursively check expressions for nesting constructs
     fn check_expr_for_nesting(&mut self, cx: &LateContext<'_>, expr: &Expr<'_>, depth: usize) {
         // let expr = expr.peel_drop_temps();
         let kind_kind = ExprKindKind::from(expr.kind);
-
-        if depth == 0 && self.current_span.is_none() {
-            let snippet = self.snippet_first_line(cx, expr.span);
-            // println!("    SET current_span: {snippet}");
-            self.current_span = Some(expr.span);
-        }
 
         'block: {
             let is_dummy = expr.span.is_dummy();
@@ -326,17 +326,16 @@ impl NestingTooDeep {
                 break 'block;
             }
 
-            let snippet = self.snippet_first_line(cx, expr.span);
-            // println!("    EXPR depth={depth} {kind_kind}: {snippet}");
-
             match expr.kind {
                 ExprKind::If(_expr, then_expr, else_expr) => {
+                    self.set_outer_span_if_unset(expr.span);
                     self.check_expr_for_nesting(cx, then_expr.peel_blocks(), depth + 1);
                     if let Some(else_expr) = else_expr {
                         self.check_expr_for_nesting(cx, else_expr.peel_blocks(), depth + 1);
                     }
                 }
                 ExprKind::Loop(block, _label, loop_source, _span) => {
+                    self.set_outer_span_if_unset(expr.span);
                     let depth = match loop_source {
                         // While desugars to an extra ExprKind::If
                         LoopSource::While => depth,
@@ -350,7 +349,7 @@ impl NestingTooDeep {
                     self.check_expr_for_nesting(cx, inner_expr, depth);
                 }
                 ExprKind::Match(expr, arms, match_source) => {
-                    // let is_for_loop = match_source == MatchSource::ForLoopDesugar;
+                    self.set_outer_span_if_unset(expr.span);
                     for arm in arms {
                         // self.print_span(cx, &format!("MATCH ARM depth={depth}"), arm.span);
                         // Don't count match itself as a level of nesting
@@ -358,6 +357,7 @@ impl NestingTooDeep {
                     }
                 }
                 ExprKind::Closure(closure) => {
+                    self.set_outer_span_if_unset(expr.span);
                     let body_expr = cx.tcx.hir_body(closure.body).value;
                     let kind_kind = ExprKindKind::from(body_expr.kind);
                     // println!("CLOSURE! {kind_kind} {}", self.snippet(cx, expr.span));
@@ -442,6 +442,9 @@ impl NestingTooDeep {
             }
 
             if let StmtKind::Let(local) = &stmt.kind {
+                // println!("LET EXPR: OUTER SPAN: {:?}", self.current_span);
+                self.set_outer_span_if_unset(local.span);
+
                 if let Some(init_expr) = &local.init {
                     self.check_expr_for_nesting(cx, init_expr, depth);
                 }

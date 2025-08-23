@@ -1,75 +1,116 @@
-warning: 
-  --> $DIR/main.rs:2:17
-   |
-LL |     let x = 42; // This should trigger the lint
-   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
-   = note: `#[warn(eol_comments)]` on by default
+error: 
+ --> ui/main.rs:5:16
+  |
+5 |     let x = 42; // This should trigger the lint
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: end-of-line comments should be moved or removed
+  = help: consider removing or moving this comment
+  = note: `-D eol-comments` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(eol_comments)]`
+help: remove EOL comment
+  |
+5 -     let x = 42; // This should trigger the lint
+5 +     let x = 42;
+  |
 
-warning: 
-  --> $DIR/main.rs:3:17
-   |
-LL |     let y = 10; // Another end-of-line comment
-   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+error: 
+ --> ui/main.rs:7:16
+  |
+7 |     let y = 10; // Another end-of-line comment
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: end-of-line comments should be moved or removed
+  = help: consider removing or moving this comment
+help: remove EOL comment
+  |
+7 -     let y = 10; // Another end-of-line comment
+7 +     let y = 10;
+  |
 
-warning: 
-  --> $DIR/main.rs:6:20
+error: 
+  --> ui/main.rs:11:19
    |
-LL |     let z = x + y; // But this comment is not
-   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 |     let z = x + y; // But this comment is not
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+   = note: end-of-line comments should be moved or removed
+   = help: consider removing or moving this comment
+help: remove EOL comment
+   |
+11 -     let z = x + y; // But this comment is not
+11 +     let z = x + y;
+   |
 
-warning: 
-  --> $DIR/main.rs:15:36
+error: 
+  --> ui/main.rs:21:35
    |
-LL |         println!("y is positive"); // This should trigger the lint
-   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |         println!("y is positive"); // This should trigger the lint
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+   = note: end-of-line comments should be moved or removed
+   = help: consider removing or moving this comment
+help: remove EOL comment
+   |
+21 -         println!("y is positive"); // This should trigger the lint
+21 +         println!("y is positive");
+   |
 
-warning: 
-  --> $DIR/main.rs:20:31
+error: 
+  --> ui/main.rs:27:30
    |
-LL |         42 => "magic number", /* block comment should not be here */
-   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |         42 => "magic number", /* block comment should not be here */
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+   = note: end-of-line comments should be moved or removed
+   = help: consider removing or moving this comment
+help: move block comment to its own line
+   |
+27 ~         42 => "magic number", 
+28 ~  /* block comment should not be here */
+   |
 
-warning: 
-  --> $DIR/main.rs:28:13
+error: 
+  --> ui/main.rs:36:12
    |
-LL |     x: i32, // Field comment - should trigger lint
-   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |     x: i32, // Field comment - should trigger lint
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+   = note: end-of-line comments should be moved or removed
+   = help: consider removing or moving this comment
+help: remove EOL comment
+   |
+36 -     x: i32, // Field comment - should trigger lint
+36 +     x: i32,
+   |
 
-warning: 
-  --> $DIR/main.rs:29:13
+error: 
+  --> ui/main.rs:38:12
    |
-LL |     y: i32, // Another field comment - should trigger lint
-   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |     y: i32, // Another field comment - should trigger lint
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+   = note: end-of-line comments should be moved or removed
+   = help: consider removing or moving this comment
+help: remove EOL comment
+   |
+38 -     y: i32, // Another field comment - should trigger lint
+38 +     y: i32,
+   |
 
-warning: 
-  --> $DIR/main.rs:40:61
+error: 
+  --> ui/main.rs:50:60
    |
-LL |         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
-   |                                                             ^^^^^^^^^^^^^^^^^^^^^^
+50 |         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
+   |                                                            ^^^^^^^^^^^^^^^^^^^^^^^
    |
-   = note: end-of-line comment should be moved to its own line above the code
-   = help: consider moving this comment to its own line above the code
+   = note: end-of-line comments should be moved or removed
+   = help: consider removing or moving this comment
+help: remove EOL comment
+   |
+50 -         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
+50 +         ((self.x * self.x + self.y * self.y) as f64).sqrt()
+   |
 
-warning: 8 warnings emitted
+error: aborting due to 8 previous errors
 

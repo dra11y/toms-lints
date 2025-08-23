@@ -9,11 +9,15 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[[example]]
+name = "uninlined_format_args"
+path = "ui/main.rs"
+
 [dependencies]
 dylint_linting.workspace = true
 
 [dev-dependencies]
-dylint_testing.workspace = true
+dylint_uitesting.workspace = true
 
 [package.metadata.rust-analyzer]
 rustc_private = true

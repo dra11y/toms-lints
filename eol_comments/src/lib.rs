@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(let_chains)]
 #![warn(unused_extern_crates)]
 
 extern crate rustc_errors;
@@ -149,5 +148,5 @@ impl<'tcx> LateLintPass<'tcx> for EolComments {
 
 #[test]
 fn ui() {
-    dylint_testing::ui_test(env!("CARGO_PKG_NAME"), "ui");
+    dylint_uitesting::ui_test(env!("CARGO_PKG_NAME"), "ui");
 }

@@ -1,8 +1,13 @@
+#![allow(unused)]
+
 fn main() {
+    //~v eol_comments
     let x = 42; // This should trigger the lint
+    //~v eol_comments
     let y = 10; // Another end-of-line comment
 
     // This comment is fine - it's on its own line
+    //~v eol_comments
     let z = x + y; // But this comment is not
 
     if x > 0 {
@@ -12,11 +17,13 @@ fn main() {
 
     // This is also fine
     if y > 0 {
+        //~v eol_comments
         println!("y is positive"); // This should trigger the lint
     }
 
     let result = match x {
         // This is fine - comment on its own line
+        //~v eol_comments
         42 => "magic number", /* block comment should not be here */
         _ => "other",
     };
@@ -25,7 +32,9 @@ fn main() {
 }
 
 struct Point {
+    //~v eol_comments
     x: i32, // Field comment - should trigger lint
+    //~v eol_comments
     y: i32, // Another field comment - should trigger lint
 }
 
@@ -37,6 +46,7 @@ impl Point {
 
     // This method comment is fine
     fn distance(&self) -> f64 {
+        //~v eol_comments
         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
     }
 }

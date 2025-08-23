@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 dylint_linting.workspace = true
 
 [dev-dependencies]
-dylint_testing.workspace = true
+dylint_uitesting.workspace = true
 
 [package.metadata.rust-analyzer]
 rustc_private = true

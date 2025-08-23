@@ -1,68 +1,421 @@
-warning: nested structure is 3 levels deep (max: 3)
-  --> $DIR/main.rs:19:5
-   |
-LL | /     if value > 0 {
-LL | |         if value < 100 {
-LL | |             if value % 2 == 0 {
-LL | |                 println!("Level 3 - should lint");
-...  |
-LL | |     }
-   | |_____^
-   |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
-   = note: `#[warn(nesting_too_deep)]` on by default
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:107:5
+    |
+107 |     info!(name: "test", "This is a test with {:?}", b);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+    = note: `-D uninlined-format-args` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(uninlined_format_args)]`
+help: change this to
+    |
+107 -     info!(name: "test", "This is a test with {:?}", b);
+107 +     info!(name: "test", "This is a test with {b:?}");
+    |
 
-warning: nested structure is 3 levels deep (max: 3)
-  --> $DIR/main.rs:28:5
-   |
-LL | /     if value > 0 {
-LL | |         if value < 100 {
-LL | |             if value % 2 == 0 {
-LL | |                 if value > 10 {
-...  |
-LL | |     }
-   | |_____^
-   |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:109:5
+    |
+109 |     info!(name: "test", { b }, "This is a test with {}", a);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+109 -     info!(name: "test", { b }, "This is a test with {}", a);
+109 +     info!(name: "test", { b }, "This is a test with {a}");
+    |
 
-warning: nested structure is 3 levels deep (max: 3)
-  --> $DIR/main.rs:57:5
-   |
-LL | /     if let Some(x) = opt1 {
-LL | |         if let Some(y) = opt2 {
-LL | |             if let Some(z) = opt3 {
-LL | |                 println!("Level 3 - should lint: {} {} {}", x, y, z);
-...  |
-LL | |     }
-   | |_____^
-   |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:111:5
+    |
+111 |     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+111 -     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {}", a);
+111 +     info!(name: "test", target: "test_target", parent: "test_parent", { field1: "value1" }, "This is a test with {a}");
+    |
 
-warning: nested structure is 3 levels deep (max: 3)
-  --> $DIR/main.rs:84:5
-   |
-LL | /     if let Ok(x) = res1 {
-LL | |         if let Ok(y) = res2 {
-LL | |             if let Ok(z) = res3 {
-LL | |                 println!("Level 3 - should lint: {} {} {}", x, y, z);
-...  |
-LL | |     }
-   | |_____^
-   |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:113:5
+    |
+113 |     info!({ a, b }, "This is a test with {}", a);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+113 -     info!({ a, b }, "This is a test with {}", a);
+113 +     info!({ a, b }, "This is a test with {a}");
+    |
 
-warning: nested structure is 3 levels deep (max: 3)
-  --> $DIR/main.rs:99:5
-   |
-LL | /     if value > 0 {
-LL | |         if let Some(x) = option {
-LL | |             if let Ok(y) = result {
-LL | |                 println!("Mixed level 3 - should lint: {} {} {}", value, x, y);
-...  |
-LL | |     }
-   | |_____^
-   |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:115:5
+    |
+115 | /     info!(
+116 | |         "This is a test with {} and {:?}, with {} several {} placeholders {}",
+117 | |         a, b, c, d, e
+118 | |     );
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+116 -         "This is a test with {} and {:?}, with {} several {} placeholders {}",
+116 +         "This is a test with {a} and {b:?}, with {c} several {d} placeholders {e}"
+    |
 
-warning: 5 warnings emitted
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:122:5
+    |
+122 |     info!("Display format: {}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+122 -     info!("Display format: {}", c);
+122 +     info!("Display format: {c}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:126:5
+    |
+126 |     info!("Debug format: {:?}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+126 -     info!("Debug format: {:?}", c);
+126 +     info!("Debug format: {c:?}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:130:5
+    |
+130 |     info!("Scientific lower: {:e}", d);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+130 -     info!("Scientific lower: {:e}", d);
+130 +     info!("Scientific lower: {d:e}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:134:5
+    |
+134 |     info!("Scientific upper: {:E}", d);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+134 -     info!("Scientific upper: {:E}", d);
+134 +     info!("Scientific upper: {d:E}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:138:5
+    |
+138 |     info!("Octal: {:o}", e);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+138 -     info!("Octal: {:o}", e);
+138 +     info!("Octal: {e:o}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:142:5
+    |
+142 |     info!("Pointer: {:p}", ptr);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+142 -     info!("Pointer: {:p}", ptr);
+142 +     info!("Pointer: {ptr:p}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:146:5
+    |
+146 |     info!("Binary: {:b}", e);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+146 -     info!("Binary: {:b}", e);
+146 +     info!("Binary: {e:b}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:150:5
+    |
+150 |     info!("Hex lower: {:x}", e);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+150 -     info!("Hex lower: {:x}", e);
+150 +     info!("Hex lower: {e:x}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:154:5
+    |
+154 |     info!("Hex upper: {:X}", e);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+154 -     info!("Hex upper: {:X}", e);
+154 +     info!("Hex upper: {e:X}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:158:5
+    |
+158 |     info!("Right aligned: {:>10}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+158 -     info!("Right aligned: {:>10}", c);
+158 +     info!("Right aligned: {c:>10}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:160:5
+    |
+160 |     info!("Left aligned: {:<10}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+160 -     info!("Left aligned: {:<10}", c);
+160 +     info!("Left aligned: {c:<10}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:162:5
+    |
+162 |     info!("Center aligned: {:^10}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+162 -     info!("Center aligned: {:^10}", c);
+162 +     info!("Center aligned: {c:^10}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:164:5
+    |
+164 |     info!("Zero padded: {:08}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+164 -     info!("Zero padded: {:08}", c);
+164 +     info!("Zero padded: {c:08}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:166:5
+    |
+166 |     info!("With sign: {:+}", c);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+166 -     info!("With sign: {:+}", c);
+166 +     info!("With sign: {c:+}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:168:5
+    |
+168 |     info!("Precision: {:.2}", d);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+168 -     info!("Precision: {:.2}", d);
+168 +     info!("Precision: {d:.2}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:170:5
+    |
+170 |     info!("Alternate hex: {:#x}", e);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+170 -     info!("Alternate hex: {:#x}", e);
+170 +     info!("Alternate hex: {e:#x}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:172:5
+    |
+172 |     info!("Debug hex: {:x?}", e);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+172 -     info!("Debug hex: {:x?}", e);
+172 +     info!("Debug hex: {e:x?}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:184:22
+    |
+184 |     let mock_ident = mock_format_ident!("{}{ident_second}{}", ident_first, ident_third);
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+184 -     let mock_ident = mock_format_ident!("{}{ident_second}{}", ident_first, ident_third);
+184 +     let mock_ident = mock_format_ident!("{ident_first}{ident_second}{ident_third}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:190:23
+    |
+190 |     let mock_ident2 = mock_format_ident!("{}", with_comma);
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+190 -     let mock_ident2 = mock_format_ident!("{}", with_comma);
+190 +     let mock_ident2 = mock_format_ident!("{with_comma}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:192:23
+    |
+192 |     let mock_ident3 = mock_format_ident!("{}{}", "literal,string", ident_first);
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+192 -     let mock_ident3 = mock_format_ident!("{}{}", "literal,string", ident_first);
+192 +     let mock_ident3 = mock_format_ident!("literal,string{ident_first}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:196:23
+    |
+196 |     let mock_ident4 = mock_format_ident!("{}", r#"raw"string"#);
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+196 -     let mock_ident4 = mock_format_ident!("{}", r#"raw"string"#);
+196 +     let mock_ident4 = mock_format_ident!("raw\"string");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:203:23
+    |
+203 |       let mock_ident6 = mock_format_ident!(
+    |  _______________________^
+204 | |         "{}{}{}",
+205 | |         "literal_string",
+206 | |         format!("literal_string{with_comma}"),
+207 | |         ident_third
+208 | |     );
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+203 -     let mock_ident6 = mock_format_ident!(
+204 -         "{}{}{}",
+205 -         "literal_string",
+206 -         format!("literal_string{with_comma}"),
+207 -         ident_third
+208 -     );
+203 +     let mock_ident6 = mock_format_ident!("literal_string{}{ident_third}", format!("literal_string{with_comma}"));
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:232:5
+    |
+232 |     mock_format_ident!("{}", "literal,with,commas");
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+232 -     mock_format_ident!("{}", "literal,with,commas");
+232 +     mock_format_ident!("literal,with,commas");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:236:5
+    |
+236 |     mock_format_ident!("{}", "literal\"with\"quotes");
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+236 -     mock_format_ident!("{}", "literal\"with\"quotes");
+236 +     mock_format_ident!("literal\\"with\\"quotes");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:240:5
+    |
+240 |     mock_format_ident!("{}", "complex\"literal,with\"everything");
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+240 -     mock_format_ident!("{}", "complex\"literal,with\"everything");
+240 +     mock_format_ident!("complex\\"literal,with\\"everything");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:244:5
+    |
+244 |     mock_format_ident!("{}", r#"raw"string"with"quotes"#);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+244 -     mock_format_ident!("{}", r#"raw"string"with"quotes"#);
+244 +     mock_format_ident!("raw\"string\"with\"quotes");
+    |
+
+error: aborting due to 31 previous errors
 
