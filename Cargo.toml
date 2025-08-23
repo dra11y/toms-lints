@@ -9,6 +9,7 @@ edition = "2024"
 resolver = "3"
 members = ["eol_comments", "nesting_too_deep", "uninlined_format_args"]
 
+# constituent library: https://github.com/trailofbits/dylint/blob/master/utils/linting/README.md#constituent-feature
 [lib]
 crate-type = ["cdylib"]
 
