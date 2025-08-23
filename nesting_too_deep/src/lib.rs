@@ -146,7 +146,10 @@ dylint_linting::impl_late_lint! {
     /// Deeply nested code is hard to read and maintain, leading to confusion and bugs.
     ///
     /// ### Examples
-    /// ```rust
+    /// ```rust,no_run
+    /// # let result: Result<i32, &str> = Ok(42);
+    /// # let option: Option<i32> = Some(10);
+    /// # let condition3 = true;
     /// if let Ok(value) = result {
     ///     // Do something
     ///     if let Some(inner) = option {
@@ -162,12 +165,16 @@ dylint_linting::impl_late_lint! {
     /// ```
     ///
     /// Use instead:
-    /// ```rust
-    ///
-    /// let Ok(value) = result?;
-    /// let Some(inner) = option {
+    /// ```rust,no_run
+    /// # let result: Result<i32, &str> = Ok(42);
+    /// # let option: Option<i32> = Some(10);
+    /// # let condition3 = true;
+    /// let Ok(value) = result else {
     ///     return;
-    /// }
+    /// };
+    /// let Some(inner) = option else {
+    ///     return;
+    /// };
     ///
     /// if condition3 {
     ///     // Do something
@@ -274,12 +281,11 @@ impl NestingTooDeep {
 
     fn snippet_collapsed(&self, cx: &LateContext<'_>, span: Span) -> String {
         let snippet = self.snippet(cx, span);
-        let collapsed = snippet
+        snippet
             .lines()
             .map(str::trim)
             .collect::<Vec<_>>()
-            .join("; ");
-        collapsed
+            .join("; ")
     }
 
     fn snippet_first_line(&self, cx: &LateContext<'_>, span: Span) -> String {

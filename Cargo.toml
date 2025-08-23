@@ -1,7 +1,33 @@
+[package]
+name = "toms-lints"
+version = "1.0.0"
+authors = ["Tom Grushka"]
+description = "Useful lints for dylint"
+edition = "2024"
+
 [workspace]
 resolver = "3"
 members = ["eol_comments", "nesting_too_deep", "uninlined_format_args"]
 
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+dylint_linting.workspace = true
+nesting_too_deep = { path = "nesting_too_deep", features = ["rlib"] }
+uninlined_format_args = { path = "uninlined_format_args", features = ["rlib"] }
+eol_comments = { path = "eol_comments", features = ["rlib"] }
+
 [workspace.dependencies]
 dylint_linting = "4.1.0"
 dylint_uitesting = { version = "4.1.0", path = "/Users/tom/apps/dylint_uitesting" }
+
+[workspace.lints.rust.unexpected_cfgs]
+level = "deny"
+check-cfg = ["cfg(dylint_lib, values(any()))"]
+
+[workspace.metadata.dylint]
+libraries = [{ path = "." }]
+
+[package.metadata.rust-analyzer]
+rustc_private = true

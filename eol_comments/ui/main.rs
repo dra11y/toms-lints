@@ -3,6 +3,7 @@
 fn main() {
     //~v eol_comments
     let x = 42; // This should trigger the lint
+
     //~v eol_comments
     let y = 10; // Another end-of-line comment
 

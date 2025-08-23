@@ -13,15 +13,15 @@ const CHANGE_MESSAGE: &str = "change this to";
 const HELP_MESSAGE: &str = "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args";
 
 use rustc_ast::{
-    Expr, ExprKind, FormatArgPositionKind, FormatArgs, FormatArgsPiece, FormatArgumentKind,
-    FormatPlaceholder,
     token::{Delimiter, IdentIsRaw, LitKind, TokenKind},
     tokenstream::{TokenStream, TokenTree},
+    Expr, ExprKind, FormatArgPositionKind, FormatArgs, FormatArgsPiece, FormatArgumentKind,
+    FormatPlaceholder,
 };
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_lint_defs::Applicability;
 use rustc_parse::new_parser_from_source_str;
-use rustc_span::{BytePos, FileName, Span, hygiene};
+use rustc_span::{hygiene, BytePos, FileName, Span};
 
 /// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L456
 /// Span of the `:` and format specifiers
@@ -91,7 +91,7 @@ dylint_linting::declare_early_lint! {
     /// by linting 3rd party macros for uninlined_format_args like clippy does for std.
     ///
     /// ### Example
-    /// ```rust
+    /// ```ignore
     /// fn main() {
     ///    let a = 42;
     ///    let b = Some("test");
@@ -259,7 +259,7 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
 
             // Find the placeholder content
             let mut placeholder = String::new();
-            while let Some(nc) = chars.next() {
+            for nc in chars.by_ref() {
                 if nc == '}' {
                     break;
                 }

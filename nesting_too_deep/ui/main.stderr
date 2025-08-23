@@ -10,7 +10,7 @@ error: nested structure is 4 levels deep (max: 3)
 18 | |     }
    | |_____^
    |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+   = help: use early returns and guard clauses to reduce nesting
    = note: `-D nesting-too-deep` implied by `-D warnings`
    = help: to override `-D warnings` add `#[allow(nesting_too_deep)]`
 
@@ -25,7 +25,7 @@ error: nested structure is 5 levels deep (max: 3)
 33 | |     };
    | |______^
    |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+   = help: use early returns and guard clauses to reduce nesting
 
 error: nested structure is 4 levels deep (max: 3)
   --> ui/main.rs:37:5
@@ -39,7 +39,7 @@ error: nested structure is 4 levels deep (max: 3)
 46 | |     };
    | |______^
    |
-   = help: consider using early returns, guard clauses, or extracting functions to reduce nesting
+   = help: use early returns and guard clauses to reduce nesting
 
 error: aborting due to 3 previous errors
 

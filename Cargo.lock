@@ -1355,6 +1355,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
+name = "toms-lints"
+version = "1.0.0"
+dependencies = [
+ "dylint_linting",
+ "eol_comments",
+ "nesting_too_deep",
+ "uninlined_format_args",
+]
+
+[[package]]
 name = "tracing"
 version = "0.1.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"

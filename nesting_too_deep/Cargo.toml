@@ -6,10 +6,11 @@ description = "Lint for nested if/then/else and other branching that is too many
 edition = "2024"
 publish = false
 
-# https://docs.rs/dylint_uitesting/latest/dylint_uitesting/
-
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+rlib = ["dylint_linting/constituent"]
 
 [[example]]
 name = "nesting_too_deep"
