@@ -1,0 +1,40 @@
+[package]
+name = "clippy"
+version = "0.1.0"
+authors = ["Tom Grushka"]
+description = "Include clippy lints"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+rlib = ["dylint_linting/constituent"]
+
+[[example]]
+name = "clippy"
+path = "ui/main.rs"
+
+[dependencies]
+dylint_internal.workspace = true
+dylint_linting.workspace = true
+clippy_config = { git = "https://github.com/rust-lang/rust-clippy" }
+clippy_lints = { git = "https://github.com/rust-lang/rust-clippy" }
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy" }
+declare_clippy_lint = { git = "https://github.com/rust-lang/rust-clippy" }
+serde_json = "1.0"
+
+[dev-dependencies]
+dylint.workspace = true
+dylint_internal.workspace = true
+dylint_uitesting.workspace = true
+
+anyhow = "1.0"
+cargo_metadata = "0.20"
+env_logger = "0.11"
+log = "0.4"
+tempfile = "3.20"
+
+[package.metadata.rust-analyzer]
+rustc_private = true

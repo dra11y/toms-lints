@@ -7,7 +7,7 @@ edition = "2024"
 
 [workspace]
 resolver = "3"
-members = ["eol_comments", "nesting_too_deep", "uninlined_format_args"]
+members = ["clippy", "eol_comments", "nesting_too_deep", "uninlined_format_args"]
 
 # constituent library: https://github.com/trailofbits/dylint/blob/master/utils/linting/README.md#constituent-feature
 [lib]
@@ -20,7 +20,9 @@ uninlined_format_args = { path = "uninlined_format_args", features = ["rlib"] }
 eol_comments = { path = "eol_comments", features = ["rlib"] }
 
 [workspace.dependencies]
+dylint = "4.1.0"
 dylint_linting = "4.1.0"
+dylint_internal = "4.1.0"
 dylint_uitesting = { version = "4.1.0", path = "/Users/tom/apps/dylint_uitesting" }
 
 [workspace.lints.rust.unexpected_cfgs]
