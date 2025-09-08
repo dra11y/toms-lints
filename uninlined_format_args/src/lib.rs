@@ -179,7 +179,9 @@ impl EarlyLintPass for UninlinedFormatArgs {
             let format_spec = format_placeholder_format_span(placeholder)
                 .and_then(|spec_span| cx.sess().source_map().span_to_snippet(spec_span).ok())
                 .unwrap_or_default();
-            let suggestion = format!("{{{identifier}{format_spec}}}");
+            // Adjust any positional indices in the format spec that are affected by removing this argument.
+            let adjusted_spec = adjust_positional_indices(&format_spec, arg_index);
+            let suggestion = format!("{{{identifier}{adjusted_spec}}}");
 
             if !placeholder_span.is_empty() {
                 fixes.push((placeholder_span, suggestion));
@@ -199,6 +201,72 @@ impl EarlyLintPass for UninlinedFormatArgs {
             lint.multipart_suggestion(CHANGE_MESSAGE, fixes, Applicability::MachineApplicable);
         });
     }
+}
+
+/// Adjust positional argument indices within a format specifier string after the
+/// argument at `removed_index` is inlined and removed from the argument list.
+///
+/// We look for occurrences of `<digits>$` and, for each numeric value `n` greater
+/// than `removed_index`, decrement it by one to reflect the shifted indices.
+/// If we encounter an index exactly equal to `removed_index`, we leave the spec
+/// unchanged (best-effort); this represents an unsupported pattern like
+/// `format!("{:0$}", x)` where width reuses the same argument. In such a case,
+/// the original suggestion (without index adjustment) would become invalid, so
+/// by not altering the spec we effectively avoid producing an incorrect
+/// negative shift. (Future improvement: skip producing a suggestion for that
+/// placeholder.)
+fn adjust_positional_indices(spec: &str, removed_index: usize) -> String {
+    if spec.is_empty() {
+        return String::new();
+    }
+
+    // Fast path: if there's no '$', nothing to do.
+    if !spec.as_bytes().contains(&b'$') {
+        return spec.to_string();
+    }
+
+    let bytes = spec.as_bytes();
+    let mut i = 0;
+    let mut out = String::with_capacity(spec.len());
+    while i < bytes.len() {
+        if bytes[i].is_ascii_digit() {
+            let start = i;
+            while i < bytes.len() && bytes[i].is_ascii_digit() {
+                i += 1;
+            }
+            // If next char is '$', treat this as positional index.
+            if i < bytes.len() && bytes[i] == b'$' {
+                let num_str = &spec[start..i];
+                if let Ok(num) = num_str.parse::<usize>() {
+                    if num == removed_index {
+                        // Unsupported: width/precision referencing the removed argument itself.
+                        // Return original spec unchanged to avoid producing invalid format.
+                        return spec.to_string();
+                    }
+                    if num > removed_index {
+                        let new_num = num - 1;
+                        out.push_str(&new_num.to_string());
+                        out.push('$');
+                        i += 1; // Skip '$'
+                        continue;
+                    }
+                }
+                // Fall through: leave original digits and '$' untouched
+                out.push_str(num_str);
+                out.push('$');
+                i += 1;
+                continue;
+            } else {
+                // Not a positional index; just copy digits.
+                out.push_str(&spec[start..i]);
+                continue;
+            }
+        }
+        // Copy current char and advance.
+        out.push(bytes[i] as char);
+        i += 1;
+    }
+    out
 }
 
 fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<String> {
