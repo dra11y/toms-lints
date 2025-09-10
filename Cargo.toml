@@ -21,7 +21,8 @@ eol_comments = { path = "eol_comments", features = ["rlib"] }
 
 [workspace.dependencies]
 anyhow = "1"
-# clippy_utils = { git = "https://github.com/rust-lang/rust-clippy" }
+# MUST use nightly from clippy https://github.com/rust-lang/rust-clippy/blob/master/rust-toolchain.toml
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy" }
 clippy_config = { git = "https://github.com/rust-lang/rust-clippy" }
 clippy_lints = { git = "https://github.com/rust-lang/rust-clippy" }
 declare_clippy_lint = { git = "https://github.com/rust-lang/rust-clippy" }
