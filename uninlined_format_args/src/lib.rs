@@ -13,15 +13,15 @@ const CHANGE_MESSAGE: &str = "change this to";
 const HELP_MESSAGE: &str = "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args";
 
 use rustc_ast::{
-    token::{Delimiter, IdentIsRaw, LitKind, TokenKind},
-    tokenstream::{TokenStream, TokenTree},
     Expr, ExprKind, FormatArgPositionKind, FormatArgs, FormatArgsPiece, FormatArgumentKind,
     FormatPlaceholder,
+    token::{Delimiter, IdentIsRaw, LitKind, TokenKind},
+    tokenstream::{TokenStream, TokenTree},
 };
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_lint_defs::Applicability;
 use rustc_parse::new_parser_from_source_str;
-use rustc_span::{hygiene, BytePos, FileName, Span};
+use rustc_span::{BytePos, FileName, Span, hygiene};
 
 /// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L456
 /// Span of the `:` and format specifiers
