@@ -5,10 +5,10 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::diagnostics::span_lint_and_help;
+// use clippy_utils::diagnostics::span_lint_and_help;
 use dylint_internal::{match_def_path, paths};
 use rustc_hir::{Expr, ExprKind, LangItem, MatchSource, QPath};
-use rustc_lint::{LateContext, LateLintPass};
+use rustc_lint::{LateContext, LateLintPass, LintContext};
 use rustc_middle::ty::{GenericArgKind, Ty, TyKind};
 use rustc_span::sym;
 
@@ -70,15 +70,22 @@ impl<'tcx> LateLintPass<'tcx> for TryIoResult {
             // return type cannot carry any additional information.
             && !is_io_result(cx, body_ty)
         {
-            span_lint_and_help(
-                cx,
-                TRY_IO_RESULT,
-                expr.span,
-                "returning a `std::io::Result` could discard relevant context (e.g., files or \
+            cx.span_lint(TRY_IO_RESULT, expr.span, |diag| {
+                diag.primary_message(
+                    "returning a `std::io::Result` could discard relevant context (e.g., files or \
                  paths involved)",
-                None,
-                "return a type that includes relevant context",
-            );
+                )
+                .help("return a type that includes relevant context");
+            });
+            // clippy_utils::diagnostics::span_lint_and_help(
+            //     cx,
+            //     TRY_IO_RESULT,
+            //     expr.span,
+            //     "returning a `std::io::Result` could discard relevant context (e.g., files or \
+            //      paths involved)",
+            //     None,
+            //     "return a type that includes relevant context",
+            // );
         }
     }
 }

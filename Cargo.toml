@@ -7,7 +7,7 @@ edition = "2024"
 
 [workspace]
 resolver = "3"
-members = ["clippy", "eol_comments", "nesting_too_deep", "uninlined_format_args"]
+members = ["clippy", "eol_comments", "nesting_too_deep", "try_io_result", "uninlined_format_args"]
 
 # constituent library: https://github.com/trailofbits/dylint/blob/master/utils/linting/README.md#constituent-feature
 [lib]
@@ -20,9 +20,23 @@ uninlined_format_args = { path = "uninlined_format_args", features = ["rlib"] }
 eol_comments = { path = "eol_comments", features = ["rlib"] }
 
 [workspace.dependencies]
-dylint = "4.1.0"
-dylint_linting = "4.1.0"
-dylint_internal = "4.1.0"
+anyhow = "1"
+# clippy_utils = { git = "https://github.com/rust-lang/rust-clippy" }
+clippy_config = { git = "https://github.com/rust-lang/rust-clippy" }
+clippy_lints = { git = "https://github.com/rust-lang/rust-clippy" }
+declare_clippy_lint = { git = "https://github.com/rust-lang/rust-clippy" }
+thiserror = "2"
+
+# dylint = "4.1.0"
+# dylint_linting = "4.1.0"
+# dylint_testing = "4.1.0"
+
+dylint = { git = "https://github.com/trailofbits/dylint" }
+dylint_linting = { git = "https://github.com/trailofbits/dylint" }
+dylint_internal = { git = "https://github.com/trailofbits/dylint" }
+dylint_testing = { git = "https://github.com/trailofbits/dylint" }
+
+# KEEP OUR OWN FORK!
 dylint_uitesting = { version = "4.1.0", path = "/Users/tom/apps/dylint_uitesting" }
 
 [workspace.lints.rust.unexpected_cfgs]

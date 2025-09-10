@@ -14,15 +14,14 @@ name = "ui"
 path = "ui/main.rs"
 
 [dependencies]
-clippy_utils = { workspace = true }
-
+# clippy_utils.workspace = true
 dylint_internal = { workspace = true, features = ["match_def_path"] }
 dylint_linting.workspace = true
 
 [dev-dependencies]
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-dylint_testing = { workspace = true }
+anyhow.workspace = true
+thiserror.workspace = true
+dylint_testing.workspace = true
 
 [lints]
 workspace = true
