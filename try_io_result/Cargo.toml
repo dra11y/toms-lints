@@ -1,0 +1,31 @@
+[package]
+name = "try_io_result"
+version = "4.1.0"
+authors = ["Samuel E. Moelius III <sam@moeli.us>"]
+description = "A lint to check for the `?` operator applied to `std::io::Result`"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[[example]]
+name = "ui"
+path = "ui/main.rs"
+
+[dependencies]
+clippy_utils = { workspace = true }
+
+dylint_internal = { workspace = true, features = ["match_def_path"] }
+dylint_linting.workspace = true
+
+[dev-dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+dylint_testing = { workspace = true }
+
+[lints]
+workspace = true
+
+[package.metadata.rust-analyzer]
+rustc_private = true

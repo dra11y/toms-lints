@@ -15,10 +15,11 @@ rlib = ["dylint_linting/constituent"]
 [dependencies]
 dylint_internal.workspace = true
 dylint_linting.workspace = true
-clippy_config = { git = "https://github.com/rust-lang/rust-clippy" }
-clippy_lints = { git = "https://github.com/rust-lang/rust-clippy" }
+clippy_config.workspace = true
+clippy_lints.workspace = true
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy" }
-declare_clippy_lint = { git = "https://github.com/rust-lang/rust-clippy" }
+# clippy_utils.workspace = true
+declare_clippy_lint.workspace = true
 serde_json = "1.0"
 
 [dev-dependencies]
@@ -26,7 +27,7 @@ dylint.workspace = true
 dylint_internal.workspace = true
 dylint_uitesting.workspace = true
 
-anyhow = "1.0"
+anyhow.workspace = true
 cargo_metadata = "0.19.2" # pinned by dylint_internal
 env_logger = "0.11"
 log = "0.4"
