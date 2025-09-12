@@ -417,5 +417,31 @@ help: change this to
 244 +     mock_format_ident!("raw\"string\"with\"quotes");
     |
 
-error: aborting due to 31 previous errors
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:281:22
+    |
+281 |     let _formatted = format!("[{:^1$}]", name, width);
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+281 -     let _formatted = format!("[{:^1$}]", name, width);
+281 +     let _formatted = format!("[{name:^0$}]", width);
+    |
+
+error: variables can be used directly in the `format!` string
+   --> ui/main.rs:287:5
+    |
+287 |     println!("[{:?}] {args}", r#type);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+287 -     println!("[{:?}] {args}", r#type);
+287 +     println!("[{type:?}] {args}");
+    |
+
+error: aborting due to 33 previous errors
 

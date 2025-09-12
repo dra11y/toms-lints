@@ -99,7 +99,7 @@ fn main() {
     let a = 1;
     let b = Some("test");
     let c = 42;
-    let d = 3.14159;
+    let d = 5.159317;
     let e = 255u8;
     let ptr = &a as *const i32;
 
@@ -273,4 +273,16 @@ fn main() {
             field3: 100,
         }
     );
+
+    // 10. Positional parameters
+    let name = "abc";
+    let width = 10;
+    //~v uninlined_format_args
+    let _formatted = format!("[{:^1$}]", name, width);
+
+    // 11. r#type should suggest {type:?} (remove r# prefix)
+    //~vvv uninlined_format_args
+    let r#type: &'static str = "test";
+    let args = "arguments";
+    println!("[{:?}] {args}", r#type);
 }

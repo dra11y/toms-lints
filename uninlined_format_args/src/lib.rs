@@ -181,7 +181,8 @@ impl EarlyLintPass for UninlinedFormatArgs {
                 .unwrap_or_default();
             // Adjust any positional indices in the format spec that are affected by removing this argument.
             let adjusted_spec = adjust_positional_indices(&format_spec, arg_index);
-            let suggestion = format!("{{{identifier}{adjusted_spec}}}");
+            let identifier_name = identifier.name;
+            let suggestion = format!("{{{identifier_name}{adjusted_spec}}}");
 
             if !placeholder_span.is_empty() {
                 fixes.push((placeholder_span, suggestion));
