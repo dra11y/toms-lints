@@ -22,7 +22,7 @@ use rustc_ast::{
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_lint_defs::Applicability;
 use rustc_parse::new_parser_from_source_str;
-use rustc_span::{BytePos, FileName, Span, hygiene};
+use rustc_span::{BytePos, ExpnKind, FileName, MacroKind, Span, hygiene};
 
 /// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L456
 /// Span of the `:` and format specifiers
@@ -116,11 +116,20 @@ impl EarlyLintPass for UninlinedFormatArgs {
             return;
         };
 
-        let mut fixes = Vec::new();
-
         let callsite = expr.span.source_callsite();
 
-        // First check for frivolous reassignments by parsing the macro source
+        let mut data = expr.span.ctxt().outer_expn_data();
+        let mut outer_expn_data = data.call_site.ctxt().outer_expn_data();
+        while !outer_expn_data.is_root() {
+            data = outer_expn_data;
+            outer_expn_data = data.call_site.ctxt().outer_expn_data();
+        }
+        if !matches!(data.kind, ExpnKind::Macro(MacroKind::Bang, _)) {
+            // println!("SKIP: not a bang macro callsite: {:?}", data.kind);
+            return;
+        }
+
+        let mut fixes = Vec::new(); // First check for frivolous reassignments by parsing the macro source
         if let Some(args) = parse_macro_call_args(cx, callsite)
             && has_frivolous_reassignment(&args)
             && let Some(rewritten) = reinline_entire_invocation(cx, callsite)
