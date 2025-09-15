@@ -285,4 +285,65 @@ fn main() {
     let r#type: &'static str = "test";
     let args = "arguments";
     println!("[{:?}] {args}", r#type);
+
+    // Test cases for frivolous reassignments (ident = ident patterns)
+    let val = 42;
+    let value = "test";
+    let name = "example";
+    let config = SomeStruct {
+        field1: "config".to_string(),
+        field2: vec![1, 2],
+        field3: 99,
+    };
+
+    // SHOULD LINT: frivolous reassignments (ident = ident)
+    //~v uninlined_format_args
+    info!("hello {val}", val = val);
+    //~v uninlined_format_args
+    info!("hello {value}", value = val);
+    //~v uninlined_format_args
+    info!("hello {name}", name = value);
+    //~v uninlined_format_args
+    info!("hello {val} and {value}", val = val, value = name);
+    //~v uninlined_format_args
+    println!("display {x}", x = val);
+    //~v uninlined_format_args
+    println!("display {x}, {value:?}", value = vec![1, 2, 3], x = val);
+    //~v uninlined_format_args
+    format!("debug {item:?}", item = value);
+
+    // The following SHOULD lint because it would NOT result in duplicate placeholders
+    //~v uninlined_format_args
+    format!(
+        "debug {item:?} {value2:?} {result}",
+        result = some_function(1, 2, 3),
+        item = value,
+        value2 = vec![1, 2, 3]
+    );
+
+    // The following should NOT lint because it would result in duplicate placeholders
+    format!(
+        "debug {item:?} {value:?} {result}",
+        result = some_function(1, 2, 3),
+        item = value,
+        value = vec![1, 2, 3]
+    );
+
+    // SHOULD NOT LINT: not frivolous reassignments
+    info!("hello {value}", value = some_function(1, 2, 3));
+    info!("hello {value}", value = config.field1);
+    info!("hello {value}", value = config.field3);
+    info!("hello {value}", value = "literal string");
+    info!("hello {value}", value = 42);
+    info!("hello {value}", value = format!("nested"));
+    info!("hello {value:?}", value = vec![1, 2, 3]);
+    info!("hello {value:?}", value = &val);
+    unsafe {
+        info!("hello {value}", value = *ptr);
+    }
+
+    // Edge cases that should NOT lint
+    info!("hello {value}", value = val.to_string());
+    info!("hello {value}", value = val + 1);
+    info!("hello {value}", value = (val)); // parentheses make it not a simple ident
 }

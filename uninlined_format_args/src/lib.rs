@@ -9,6 +9,7 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 
 const PRIMARY_MESSAGE: &str = "variables can be used directly in the `format!` string";
+const FRIVOLOUS_REASSIGNMENT_MESSAGE: &str = "frivolous reassignment in format arguments";
 const CHANGE_MESSAGE: &str = "change this to";
 const HELP_MESSAGE: &str = "for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args";
 
@@ -118,6 +119,24 @@ impl EarlyLintPass for UninlinedFormatArgs {
         let mut fixes = Vec::new();
 
         let callsite = expr.span.source_callsite();
+
+        // First check for frivolous reassignments by parsing the macro source
+        if let Some(args) = parse_macro_call_args(cx, callsite)
+            && has_frivolous_reassignment(&args)
+            && let Some(rewritten) = reinline_entire_invocation(cx, callsite)
+        {
+            cx.span_lint(UNINLINED_FORMAT_ARGS, callsite, move |lint| {
+                lint.primary_message(FRIVOLOUS_REASSIGNMENT_MESSAGE);
+                lint.help(HELP_MESSAGE);
+                lint.span_suggestion_verbose(
+                    callsite,
+                    CHANGE_MESSAGE,
+                    rewritten,
+                    Applicability::MachineApplicable,
+                );
+            });
+            return;
+        }
 
         for placeholder in format_args.template.iter() {
             let FormatArgsPiece::Placeholder(placeholder) = placeholder else {
@@ -270,6 +289,54 @@ fn adjust_positional_indices(spec: &str, removed_index: usize) -> String {
     out
 }
 
+/// Parses macro call arguments from the source code at the given span
+fn parse_macro_call_args(cx: &EarlyContext, callsite: Span) -> Option<Vec<String>> {
+    let snippet = cx.sess().source_map().span_to_snippet(callsite).ok()?;
+
+    let mut parser = new_parser_from_source_str(
+        &cx.sess().psess,
+        FileName::anon_source_code(&snippet),
+        snippet.clone(),
+    )
+    .ok()?;
+
+    let parsed_expr = parser.parse_expr().ok()?;
+    let ExprKind::MacCall(mac_call) = &parsed_expr.kind else {
+        return None;
+    };
+
+    parse_macro_args(&mac_call.args.tokens)
+}
+
+/// Checks if the macro arguments contain frivolous reassignments like `name = name`
+fn has_frivolous_reassignment(args: &[String]) -> bool {
+    use std::collections::{HashMap, HashSet};
+    let mut mapping = HashMap::new();
+    let mut lefts = HashSet::new();
+    let mut rights = HashSet::new();
+    for arg in args.iter().skip(1) {
+        if let Some(eq_pos) = arg.find('=') {
+            let before_eq = arg[..eq_pos].trim();
+            let after_eq = arg[eq_pos + 1..].trim();
+            let before_word = before_eq.split_whitespace().last().unwrap_or("");
+            let after_word = after_eq.split_whitespace().next().unwrap_or("");
+            if is_simple_identifier(before_word) && is_simple_identifier(after_word) {
+                mapping.insert(before_word, after_word);
+                lefts.insert(before_word);
+                rights.insert(after_word);
+            }
+        }
+    }
+    // If any mapping would cause a duplicate placeholder, do not lint
+    for (from, to) in &mapping {
+        if lefts.contains(to) && from != to {
+            // Would cause ambiguity or duplicate placeholder
+            return false;
+        }
+    }
+    !mapping.is_empty()
+}
+
 fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<String> {
     let snippet = cx.sess().source_map().span_to_snippet(callsite).ok()?;
 
@@ -288,31 +355,134 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
         }
     };
 
-    // Extract the macro call
+    // Extract the macro call and parse arguments
     let ExprKind::MacCall(mac_call) = &parsed_expr.kind else {
         return None;
     };
-
-    // Get the token stream from the macro call
-    let tokens = &mac_call.args.tokens;
-
-    // Parse the arguments manually - we need to split by commas at the top level
-    let args = parse_macro_args(tokens)?;
-
+    let args = parse_macro_args(&mac_call.args.tokens)?;
     if args.is_empty() {
         return None;
     }
 
     // First argument should be the format string
     let format_string = args.first()?;
+
+    let remaining_args: Vec<String> = args.iter().skip(1).cloned().collect();
+
     let format_content = extract_string_content(format_string)?;
 
-    // Remaining arguments
-    let remaining_args: Vec<String> = args.iter().skip(1).cloned().collect();
-    let mut arg_iter = remaining_args.iter();
+    // First, handle frivolous reassignments and build a mapping
+    use std::collections::{HashMap, HashSet};
+    let mut replacements = HashMap::new();
+    let mut filtered_args = Vec::new();
+    let mut lefts = HashSet::new();
+    let mut rights = HashSet::new();
+    for arg in &remaining_args {
+        if let Some(eq_pos) = arg.find('=') {
+            let before_eq = arg[..eq_pos].trim();
+            let after_eq = arg[eq_pos + 1..].trim();
+            let before_word = before_eq.split_whitespace().last().unwrap_or("");
+            let after_word = after_eq.split_whitespace().next().unwrap_or("");
+            if is_simple_identifier(before_word) && is_simple_identifier(after_word) {
+                lefts.insert(before_word);
+                rights.insert(after_word);
+                replacements.insert(before_word.to_string(), after_word.to_string());
+                continue;
+            }
+        }
+        filtered_args.push(arg.clone());
+    }
+    // Use FormatArgs to collect all placeholder names
+    let mut original_placeholders = std::collections::HashSet::new();
+    if let Some(format_args) = match &parsed_expr.kind {
+        rustc_ast::ExprKind::FormatArgs(fa) => Some(fa),
+        _ => None,
+    } {
+        for piece in &format_args.template {
+            if let rustc_ast::FormatArgsPiece::Placeholder(ph) = piece {
+                match &ph.argument.kind {
+                    rustc_ast::FormatArgPositionKind::Implicit => {
+                        if let Ok(idx) = ph.argument.index
+                            && let Some(arg) = format_args.arguments.by_index(idx)
+                            && let rustc_ast::ExprKind::Path(_, path) = &arg.expr.kind
+                            && let Some(seg) = path.segments.first()
+                        {
+                            original_placeholders.insert(seg.ident.name.to_string());
+                        }
+                    }
+                    rustc_ast::FormatArgPositionKind::Named => {
+                        // For named, get the name from ph.argument.index if it is Err(symbol)
+                        if let Err(sym) = ph.argument.index {
+                            original_placeholders.insert(sym.to_string());
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    // Simulate the replacements and check for duplicate placeholders
+    let mut simulated_placeholders = original_placeholders.clone();
+    for (from, to) in &replacements {
+        if from == to {
+            continue;
+        }
+        if original_placeholders.contains(to) {
+            // Would create a duplicate placeholder
+            return None;
+        }
+        simulated_placeholders.remove(from);
+        simulated_placeholders.insert(to.clone());
+    }
+    // Apply replacements to the format string
+    let mut format_content = format_content;
+    for (name, value) in &replacements {
+        format_content = format_content.replace(&format!("{{{name}}}"), &format!("{{{value}}}"));
+        let pattern = format!("{{{name}:");
+        if let Some(start) = format_content.find(&pattern)
+            && let Some(end) = format_content[start..].find('}')
+        {
+            let full_placeholder = &format_content[start..start + end + 1];
+            let spec = &full_placeholder[pattern.len()..full_placeholder.len() - 1];
+            let replacement = format!("{{{value}:{spec}}}");
+            format_content = format_content.replace(full_placeholder, &replacement);
+        }
+    }
+    // After replacements, check for duplicate placeholders
+    let mut seen = std::collections::HashSet::new();
+    let mut dup = false;
+    let mut chars = format_content.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '{' {
+            if let Some('{') = chars.peek().copied() {
+                chars.next(); // skip
+                continue;
+            }
+            let mut name = String::new();
+            let mut found = false;
+            while let Some(nc) = chars.peek().copied() {
+                if nc == '}' || nc == ':' {
+                    found = true;
+                    break;
+                }
+                name.push(nc);
+                chars.next();
+            }
+            if found && !name.is_empty() && !seen.insert(name.clone()) {
+                dup = true;
+                break;
+            }
+        }
+    }
+    if dup {
+        return None;
+    }
 
-    // Process the format string, replacing {} with inlined variables
-    let mut out_fmt = String::with_capacity(format_content.len() + remaining_args.len() * 4);
+    // Process the format string, replacing positional `{}` with inlined variables and leaving complex arguments as explicit arguments
+
+    // Walk through the format string, handling each placeholder
+    let mut arg_iter = filtered_args.iter();
+    let mut out_fmt = String::with_capacity(format_content.len() + filtered_args.len() * 4);
     let mut chars = format_content.chars().peekable();
     let mut remaining_complex_args = Vec::new();
     let mut any_changes = false;
@@ -344,11 +514,9 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
                             // For string literals, extract the content and inline it directly
                             // Need to escape quotes in the content for the format string
                             let escaped_content = content.replace('"', "\\\"");
-
                             out_fmt.push_str(&escaped_content);
                         } else {
                             // Regular identifier - wrap in {}
-
                             out_fmt.push('{');
                             out_fmt.push_str(arg);
                             out_fmt.push('}');
@@ -356,7 +524,6 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
                         any_changes = true;
                     } else {
                         // Not a simple identifier, keep the {} and add to remaining args
-
                         out_fmt.push_str("{}");
                         remaining_complex_args.push(arg.clone());
                         // Don't set any_changes = true here - we're keeping the same structure
@@ -374,7 +541,6 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
                         // Only simple identifiers (NOT string literals) can be inlined with format specifiers
                         if is_simple_identifier(arg) && !is_string_literal(arg) {
                             // Regular identifier - can be inlined with format specifier
-
                             out_fmt.push('{');
                             out_fmt.push_str(arg);
                             out_fmt.push_str(&placeholder);
@@ -382,7 +548,6 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
                             any_changes = true;
                         } else {
                             // String literals or complex expressions cannot be inlined with format specifiers
-
                             out_fmt.push('{');
                             out_fmt.push_str(&placeholder);
                             out_fmt.push('}');
@@ -396,7 +561,6 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
                     }
                 } else {
                     // This is already an inlined variable (like {foo}) - keep as is, don't consume arguments
-
                     out_fmt.push('{');
                     out_fmt.push_str(&placeholder);
                     out_fmt.push('}');
@@ -416,7 +580,7 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
     }
 
     // If there were any non-inlinable placeholders but no changes, don't suggest anything
-    if !any_changes {
+    if !any_changes && replacements.is_empty() {
         return None;
     }
 
@@ -435,7 +599,6 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
         let args_str = remaining_complex_args.join(", ");
         format!(r#"{macro_name}!("{out_fmt}", {args_str})"#)
     };
-
     Some(result)
 }
 

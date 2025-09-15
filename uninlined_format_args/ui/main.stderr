@@ -443,5 +443,119 @@ help: change this to
 287 +     println!("[{type:?}] {args}");
     |
 
-error: aborting due to 33 previous errors
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:301:5
+    |
+301 |     info!("hello {val}", val = val);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+301 -     info!("hello {val}", val = val);
+301 +     info!("hello {val}");
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:303:5
+    |
+303 |     info!("hello {value}", value = val);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+303 -     info!("hello {value}", value = val);
+303 +     info!("hello {val}");
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:305:5
+    |
+305 |     info!("hello {name}", name = value);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+305 -     info!("hello {name}", name = value);
+305 +     info!("hello {value}");
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:307:5
+    |
+307 |     info!("hello {val} and {value}", val = val, value = name);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+307 -     info!("hello {val} and {value}", val = val, value = name);
+307 +     info!("hello {val} and {name}");
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:309:5
+    |
+309 |     println!("display {x}", x = val);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+309 -     println!("display {x}", x = val);
+309 +     println!("display {val}");
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:311:5
+    |
+311 |     println!("display {x}, {value:?}", value = vec![1, 2, 3], x = val);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+311 -     println!("display {x}, {value:?}", value = vec![1, 2, 3], x = val);
+311 +     println!("display {val}, {value:?}", value=vec![1, 2, 3]);
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:313:5
+    |
+313 |     format!("debug {item:?}", item = value);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+313 -     format!("debug {item:?}", item = value);
+313 +     format!("debug {value:?}");
+    |
+
+error: frivolous reassignment in format arguments
+   --> ui/main.rs:317:5
+    |
+317 | /     format!(
+318 | |         "debug {item:?} {value2:?} {result}",
+319 | |         result = some_function(1, 2, 3),
+320 | |         item = value,
+321 | |         value2 = vec![1, 2, 3]
+322 | |     );
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+317 -     format!(
+318 -         "debug {item:?} {value2:?} {result}",
+319 -         result = some_function(1, 2, 3),
+320 -         item = value,
+321 -         value2 = vec![1, 2, 3]
+322 -     );
+317 +     format!("debug {value:?} {value2:?} {result}", result=some_function(1, 2, 3), value2=vec![1, 2, 3]);
+    |
+
+error: aborting due to 41 previous errors
 
