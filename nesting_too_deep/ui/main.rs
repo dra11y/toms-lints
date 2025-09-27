@@ -104,6 +104,35 @@ fn six() {
     }
 }
 
+// should not lint
+// TODO: check for too many else ifs -- we need a more complex linter for control flow
+fn seven() {
+    let x = 1;
+    if x < 1 {
+        println!("x < 1");
+    } else if x < 2 {
+        println!("x < 2");
+    } else if x < 3 {
+        println!("x < 3");
+    } else if x < 4 {
+        println!("x < 4");
+    } else if x < 5 {
+        println!("x < 5");
+    } else if x < 6 {
+        println!("x < 6");
+    } else if x < 7 {
+        println!("x < 7");
+    } else if x < 8 {
+        println!("x < 8");
+    } else if x < 9 {
+        println!("x < 9");
+    } else if x < 10 {
+        println!("x < 10");
+    } else {
+        println!("x >= 10");
+    }
+}
+
 fn main() {
     // Force the LazyLock to initialize to test the nesting
     let _value = *LAZY_VALUE;
@@ -112,4 +141,5 @@ fn main() {
     four();
     five();
     six();
+    seven();
 }

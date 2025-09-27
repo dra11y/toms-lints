@@ -428,7 +428,16 @@ impl NestingTooDeep {
 
                     self.check_expr_for_nesting(cx, then_expr.peel_blocks(), depth + 1);
                     if let Some(else_expr) = else_expr {
-                        self.check_expr_for_nesting(cx, else_expr.peel_blocks(), depth + 1);
+                        // Check if the else branch contains an if expression (else if chain)
+                        // If so, process it at the same depth level to avoid over-counting
+                        let else_depth = if let ExprKind::If(..) = else_expr.peel_blocks().kind {
+                            // else if - same depth as current if
+                            depth
+                        } else {
+                            // regular else block - increment depth
+                            depth + 1
+                        };
+                        self.check_expr_for_nesting(cx, else_expr.peel_blocks(), else_depth);
                     }
                 }
                 ExprKind::Loop(block, _label, loop_source, span) => {
