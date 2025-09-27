@@ -1,115 +1,115 @@
 error: 
- --> ui/main.rs:5:16
+ --> ui/main.rs:5:1
   |
 5 |     let x = 42; // This should trigger the lint
-  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   |
   = note: end-of-line comments should be moved or removed
   = help: consider removing or moving this comment
   = note: `-D eol-comments` implied by `-D warnings`
   = help: to override `-D warnings` add `#[allow(eol_comments)]`
-help: remove EOL comment
+help: move comment to previous line
   |
-5 -     let x = 42; // This should trigger the lint
-5 +     let x = 42;
+5 + // This should trigger the lint
+6 +     let x = 42;
   |
 
 error: 
- --> ui/main.rs:7:16
+ --> ui/main.rs:8:1
   |
-7 |     let y = 10; // Another end-of-line comment
-  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8 |     let y = 10; // Another end-of-line comment
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   |
   = note: end-of-line comments should be moved or removed
   = help: consider removing or moving this comment
-help: remove EOL comment
+help: move comment to previous line
   |
-7 -     let y = 10; // Another end-of-line comment
-7 +     let y = 10;
+8 + // Another end-of-line comment
+9 +     let y = 10;
   |
 
 error: 
-  --> ui/main.rs:11:19
+  --> ui/main.rs:12:1
    |
-11 |     let z = x + y; // But this comment is not
-   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 |     let z = x + y; // But this comment is not
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: end-of-line comments should be moved or removed
    = help: consider removing or moving this comment
-help: remove EOL comment
+help: move comment to previous line
    |
-11 -     let z = x + y; // But this comment is not
-11 +     let z = x + y;
+12 + // But this comment is not
+13 +     let z = x + y;
    |
 
 error: 
-  --> ui/main.rs:21:35
+  --> ui/main.rs:22:1
    |
-21 |         println!("y is positive"); // This should trigger the lint
-   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |         println!("y is positive"); // This should trigger the lint
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: end-of-line comments should be moved or removed
    = help: consider removing or moving this comment
-help: remove EOL comment
+help: move comment to previous line
    |
-21 -         println!("y is positive"); // This should trigger the lint
-21 +         println!("y is positive");
+22 + // This should trigger the lint
+23 +         println!("y is positive");
    |
 
 error: 
-  --> ui/main.rs:27:30
+  --> ui/main.rs:28:1
    |
-27 |         42 => "magic number", /* block comment should not be here */
-   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |         42 => "magic number", /* block comment should not be here */
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: end-of-line comments should be moved or removed
    = help: consider removing or moving this comment
 help: move block comment to its own line
    |
-27 ~         42 => "magic number", 
-28 ~  /* block comment should not be here */
+28 +  
+29 +  /* block comment should not be here */
    |
 
 error: 
-  --> ui/main.rs:36:12
+  --> ui/main.rs:37:1
    |
-36 |     x: i32, // Field comment - should trigger lint
-   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 |     x: i32, // Field comment - should trigger lint
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: end-of-line comments should be moved or removed
    = help: consider removing or moving this comment
-help: remove EOL comment
+help: move comment to previous line
    |
-36 -     x: i32, // Field comment - should trigger lint
-36 +     x: i32,
+37 + // Field comment - should trigger lint
+38 +     x: i32,
    |
 
 error: 
-  --> ui/main.rs:38:12
+  --> ui/main.rs:39:1
    |
-38 |     y: i32, // Another field comment - should trigger lint
-   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 |     y: i32, // Another field comment - should trigger lint
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: end-of-line comments should be moved or removed
    = help: consider removing or moving this comment
-help: remove EOL comment
+help: move comment to previous line
    |
-38 -     y: i32, // Another field comment - should trigger lint
-38 +     y: i32,
+39 + // Another field comment - should trigger lint
+40 +     y: i32,
    |
 
 error: 
-  --> ui/main.rs:50:60
+  --> ui/main.rs:51:1
    |
-50 |         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
-   |                                                            ^^^^^^^^^^^^^^^^^^^^^^^
+51 |         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: end-of-line comments should be moved or removed
    = help: consider removing or moving this comment
-help: remove EOL comment
+help: move comment to previous line
    |
-50 -         ((self.x * self.x + self.y * self.y) as f64).sqrt() // Should trigger lint
-50 +         ((self.x * self.x + self.y * self.y) as f64).sqrt()
+51 + // Should trigger lint
+52 +         ((self.x * self.x + self.y * self.y) as f64).sqrt()
    |
 
 error: aborting due to 8 previous errors

@@ -25,12 +25,7 @@ dylint_linting::declare_late_lint! {
     ///
     /// Use instead:
     /// ```rust
-    /// let x = 42;
-    /// ```
-    /// or:
-    ///
-    /// ```rust
-    /// // The Answer to the Ultimate Question of Life, The Universe, and Everything
+    /// // changed to 42
     /// let x = 42;
     /// ```
     pub EOL_COMMENTS,
@@ -101,7 +96,7 @@ impl<'tcx> LateLintPass<'tcx> for EolComments {
                             }
                         }
 
-                        let lo = span.lo() + BytePos((base + whitespace_start) as u32);
+                        let lo = span.lo() + BytePos((base) as u32);
                         let hi = span.lo() + BytePos((base + line.len()) as u32);
                         let sub = span.with_lo(lo).with_hi(hi);
 
@@ -127,11 +122,17 @@ impl<'tcx> LateLintPass<'tcx> for EolComments {
                                     Applicability::MachineApplicable,
                                 );
                             } else {
-                                // For line comments, suggest removing the comment entirely
+                                // For line comments, suggest moving the comment to the previous line
+                                let code_part = &line[..whitespace_start].trim_end();
+                                let comment_part = &line[i..].trim_start();
+                                let suggestion = format!(
+                                    "{}\n{}",
+                                    comment_part, code_part
+                                );
                                 lint.span_suggestion_verbose(
                                     sub,
-                                    "remove EOL comment",
-                                    "",
+                                    "move comment to previous line",
+                                    suggestion,
                                     Applicability::MachineApplicable,
                                 );
                             }

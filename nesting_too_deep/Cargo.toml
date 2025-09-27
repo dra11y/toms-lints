@@ -19,6 +19,7 @@ path = "ui/main.rs"
 [dependencies]
 dylint_linting.workspace = true
 serde = { version = "1.0", features = ["derive"] }
+serde-inline-default = "1.0.0"
 
 [dev-dependencies]
 dylint_uitesting.workspace = true

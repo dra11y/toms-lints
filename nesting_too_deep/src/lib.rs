@@ -14,9 +14,13 @@ use rustc_hir::{
 };
 use rustc_lint::{LateContext, LateLintPass, Level, LintContext};
 use rustc_span::{ExpnKind, Span};
+use serde_inline_default::serde_inline_default;
 
 /// Default maximum nesting levels
 const DEFAULT_MAX_DEPTH: usize = 3;
+
+/// Default maximum items in an if-block
+const DEFAULT_MAX_ITEMS: usize = 10;
 
 const HELP_MESSAGE: &str = "use early returns and guard clauses to reduce nesting";
 
@@ -108,15 +112,20 @@ impl From<ExprKind<'_>> for ExprKindKind {
 }
 
 /// Lint configuration
+#[serde_inline_default]
 #[derive(serde::Deserialize)]
 struct Config {
+    #[serde_inline_default(DEFAULT_MAX_DEPTH)]
     max_depth: usize,
+    #[serde_inline_default(DEFAULT_MAX_ITEMS)]
+    max_items: usize,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             max_depth: DEFAULT_MAX_DEPTH,
+            max_items: DEFAULT_MAX_ITEMS,
         }
     }
 }
@@ -391,9 +400,9 @@ impl NestingTooDeep {
                         && then_items as f64 > else_items as f64 * ELSE_MORE_THAN_THEN_RATIO
                     {
                         Some(ThenElseReason::ThenLargerThanElse)
-                    } else if then_items > 10 {
+                    } else if then_items > self.config.max_items {
                         Some(ThenElseReason::ThenTooMany)
-                    } else if else_items > 10 {
+                    } else if else_items > self.config.max_items {
                         Some(ThenElseReason::ElseTooMany)
                     } else {
                         None
@@ -438,7 +447,7 @@ impl NestingTooDeep {
                 }
                 ExprKind::DropTemps(inner_expr) => {
                     // println!("DESUGAR DROP TEMPS!");
-                    self.check_expr_for_nesting(cx, inner_expr, depth);
+                    self.check_expr_for_nesting(cx, inner_expr, depth.saturating_sub(1));
                 }
                 ExprKind::Match(expr, arms, match_source) => {
                     self.set_outer_span(expr.span);
