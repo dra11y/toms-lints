@@ -348,8 +348,8 @@ impl NestingTooDeep {
                 ExprKind::If(_if_expr, then_expr, else_expr) => {
                     self.set_outer_span(expr.span);
 
-                    const MAX_ITEMS: usize = 10;
-                    const ELSE_MORE_THAN_THEN_MIN: usize = 6;
+                    let max_items = self.config.max_items;
+
                     const ELSE_MORE_THAN_THEN_RATIO: f64 = 2.0;
 
                     enum ThenElseReason {
@@ -359,16 +359,21 @@ impl NestingTooDeep {
                     }
 
                     impl ThenElseReason {
-                        fn message(&self, then_items: usize, else_items: usize) -> String {
+                        fn message(
+                            &self,
+                            then_items: usize,
+                            else_items: usize,
+                            max_items: usize,
+                        ) -> String {
                             match self {
                                 ThenElseReason::ThenTooMany => {
                                     format!(
-                                        "if 'then' block has too many items: {then_items} (max: {MAX_ITEMS})"
+                                        "if 'then' block has too many items: {then_items} (max: {max_items})"
                                     )
                                 }
                                 ThenElseReason::ElseTooMany => {
                                     format!(
-                                        "if 'else' block has too many items: {else_items} (max: {MAX_ITEMS})"
+                                        "if 'else' block has too many items: {else_items} (max: {max_items})"
                                     )
                                 }
                                 ThenElseReason::ThenLargerThanElse => {
@@ -396,7 +401,7 @@ impl NestingTooDeep {
                         })
                         .unwrap_or(0);
 
-                    let reason = if else_items > ELSE_MORE_THAN_THEN_MIN
+                    let reason = if else_items > max_items / 2
                         && then_items as f64 > else_items as f64 * ELSE_MORE_THAN_THEN_RATIO
                     {
                         Some(ThenElseReason::ThenLargerThanElse)
@@ -416,7 +421,7 @@ impl NestingTooDeep {
                                 .level
                     {
                         cx.span_lint(NESTING_TOO_DEEP, expr.span, |lint| {
-                            lint.primary_message(reason.message(then_items, else_items))
+                            lint.primary_message(reason.message(then_items, else_items, max_items))
                                 .help(HELP_MESSAGE);
                         });
                     }
@@ -445,6 +450,7 @@ impl NestingTooDeep {
                     self.set_outer_span(expr.span);
                     self.check_block_for_nesting(cx, block, depth);
                 }
+                // DropTemps == Expanded for loop
                 ExprKind::DropTemps(inner_expr) => {
                     // println!("DESUGAR DROP TEMPS!");
                     self.check_expr_for_nesting(cx, inner_expr, depth.saturating_sub(1));
