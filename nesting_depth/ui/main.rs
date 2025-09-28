@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(unused, clippy::collapsible_if, clippy::single_match)]
 use std::sync::LazyLock;
 
 static LAZY_VALUE: LazyLock<i32> = LazyLock::new(|| {
@@ -110,6 +110,28 @@ fn seven() {
     let x = 1;
     if x < 1 {
         println!("x < 1");
+        if x < 2 {
+            println!("x < 2");
+            if x < 5 {
+                println!("x < 5");
+                if x < 10 {
+                    println!("x < 10");
+                    if x < 20 {
+                        println!("x < 20");
+                    } else if x < 30 {
+                        println!("x < 30");
+                    } else if x < 40 {
+                        println!("x < 40");
+                    } else if x < 50 {
+                        println!("x < 50");
+                    } else {
+                        println!("x >= 50");
+                    }
+                }
+            }
+        } else if x < 3 {
+            println!("x < 3");
+        }
     } else if x < 2 {
         println!("x < 2");
     } else if x < 3 {

@@ -125,10 +125,7 @@ impl<'tcx> LateLintPass<'tcx> for EolComments {
                                 // For line comments, suggest moving the comment to the previous line
                                 let code_part = &line[..whitespace_start].trim_end();
                                 let comment_part = &line[i..].trim_start();
-                                let suggestion = format!(
-                                    "{}\n{}",
-                                    comment_part, code_part
-                                );
+                                let suggestion = format!("{}\n{}", comment_part, code_part);
                                 lint.span_suggestion_verbose(
                                     sub,
                                     "move comment to previous line",
