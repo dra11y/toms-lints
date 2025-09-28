@@ -34,6 +34,8 @@ struct Config {
     max_depth: usize,
     #[serde_inline_default(DEFAULT_MAX_ITEMS)]
     max_items: usize,
+    #[serde_inline_default(false)]
+    debug: bool,
 }
 
 impl Default for Config {
@@ -41,6 +43,7 @@ impl Default for Config {
         Self {
             max_depth: DEFAULT_MAX_DEPTH,
             max_items: DEFAULT_MAX_ITEMS,
+            debug: false,
         }
     }
 }
@@ -179,6 +182,28 @@ struct NestingDepthVisitor<'a> {
     lints: Vec<Lint>,
     current_lint: Option<Lint>,
     inside_fn: bool,
+}
+
+impl<'a> NestingDepthVisitor<'a> {
+    const DEBUG_SPAN: SpanInfo = SpanInfo {
+        file: "main.rs",
+        start_line: 15,
+        end_line: 30,
+    };
+
+    fn debug_visit(&self, method: &str, span: Span, extra: &str) {
+        if !self.config.debug {
+            return;
+        }
+        let info = self.debug_span_info(span);
+        if !Self::DEBUG_SPAN.contains(&info) {
+            return;
+        }
+        let code = self.debug_code(span);
+        let depth = self.depth();
+        let span = self.debug_span(span);
+        println!("{method} [depth {depth}] @ {span} | {extra} | {code}");
+    }
 }
 
 impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
@@ -320,6 +345,10 @@ impl<'a> NestingDepthVisitor<'a> {
         self.contexts.len()
     }
 
+    fn debug_span_info(&self, span: Span) -> SpanInfo {
+        debug_span_info(span, self.source_map)
+    }
+
     fn debug_span(&self, span: Span) -> String {
         debug_span(span, self.source_map)
     }
@@ -405,6 +434,41 @@ impl EarlyLintPass for NestingDepth {
                 diag.help(HELP_MESSAGE);
             });
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct SpanInfo {
+    file: &'static str,
+    start_line: usize,
+    end_line: usize,
+}
+
+impl SpanInfo {
+    fn contains(&self, other: &SpanInfo) -> bool {
+        if self.file != other.file {
+            return false;
+        }
+        self.start_line <= other.start_line && self.end_line >= other.end_line
+    }
+}
+
+fn debug_span_info(span: Span, source_map: &SourceMap) -> SpanInfo {
+    let location_start = source_map.span_to_location_info(span);
+    let location_end = source_map.span_to_location_info(span.shrink_to_hi());
+    let file = location_start
+        .0
+        .map(|f| {
+            f.name
+                .display(FileNameDisplayPreference::Remapped)
+                .to_string_lossy()
+                .to_string()
+        })
+        .unwrap_or_default();
+    SpanInfo {
+        file,
+        start_line: location_start.1,
+        end_line: location_end.1,
     }
 }
 

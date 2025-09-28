@@ -27,7 +27,11 @@ clippy_utils = { git = "https://github.com/rust-lang/rust-clippy" }
 clippy_config = { git = "https://github.com/rust-lang/rust-clippy" }
 clippy_lints = { git = "https://github.com/rust-lang/rust-clippy" }
 declare_clippy_lint = { git = "https://github.com/rust-lang/rust-clippy" }
-thiserror = "2"
+env_logger = "0.11"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde-inline-default = "1"
+wherror = "2"
 
 # dylint = "4.1.0"
 # dylint_linting = "4.1.0"

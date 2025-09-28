@@ -1158,6 +1158,8 @@ version = "0.1.0"
 dependencies = [
  "dylint_linting",
  "dylint_uitesting",
+ "env_logger",
+ "log",
  "serde",
  "serde-inline-default",
 ]
@@ -1957,7 +1959,7 @@ dependencies = [
  "dylint_internal 4.1.0 (git+https://github.com/trailofbits/dylint)",
  "dylint_linting",
  "dylint_testing",
- "thiserror 2.0.16",
+ "wherror",
 ]
 
 [[package]]
@@ -2187,6 +2189,26 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "wherror"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "173da68485ccbdef03f13567248aff45302bef208a1fe1b966b9d2d7292348ed"
+dependencies = [
+ "wherror-impl",
+]
+
+[[package]]
+name = "wherror-impl"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e1270ef9f7b3afa45a98deaaaed36e5edb116c03686f69b7a89e1cccc90572c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -2,9 +2,8 @@
 
 use anyhow::Context;
 use std::{fs::File, io, path::PathBuf};
-use thiserror::Error as ThisError;
 
-#[derive(Debug, ThisError)]
+#[derive(Debug, wherror::Error)]
 pub enum Error {
     #[error("io error")]
     Io(#[from] io::Error),

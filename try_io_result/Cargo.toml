@@ -20,7 +20,7 @@ dylint_linting.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
-thiserror.workspace = true
+wherror.workspace = true
 dylint_testing.workspace = true
 
 [lints]
