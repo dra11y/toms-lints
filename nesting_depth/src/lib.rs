@@ -185,11 +185,6 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
     type Result = ();
 
     fn visit_block(&mut self, block: &'a Block) -> Self::Result {
-        // println!(
-        //     "VISIT BLOCK: {} {}",
-        //     self.depth(),
-        //     self.debug_code(block.span)
-        // );
         for stmt in &block.stmts {
             self.visit_stmt(stmt);
         }
@@ -204,33 +199,16 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
     fn visit_expr(&mut self, expr: &'a Expr) -> Self::Result {
         let depth = self.depth();
 
-        fn print_expr(depth: usize, kind: &ExprKind, span: Span, source_map: &SourceMap) {
-            if depth < 2 {
-                return;
-            }
-            let location = debug_span(span, source_map);
-            let kind = debug_expr_kind(kind);
-            // print!("{}", " ".repeat(depth * 4));
-            // println!("    EXPR {depth} {kind} @ {location}");
-        }
-
         match &expr.kind {
             ExprKind::Let(_pat, let_expr, _span, _recovered) => {
-                // println!("LET {}", self.depth());
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.push_context(ContextKind::Let, expr.span);
                 self.visit_expr(let_expr);
                 self.pop_context();
-                //
             }
             ExprKind::If(_if_expr, _if_block, _else_expr) => {
                 self.process_if(expr);
             }
-            ExprKind::While(while_expr, block, label) => {
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
-
-                //
-            }
+            ExprKind::While(while_expr, block, label) => {}
             ExprKind::ForLoop {
                 pat,
                 iter,
@@ -239,13 +217,11 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
                 kind,
             } => {
                 self.push_context(ContextKind::For, expr.span);
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.visit_block(body);
                 self.pop_context();
             }
             ExprKind::Loop(block, _label, _span) => {
                 self.push_context(ContextKind::Loop, expr.span);
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.visit_block(block);
                 self.pop_context();
             }
@@ -253,7 +229,6 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
                 for arm in arms {
                     if let Some(body) = &arm.body {
                         self.push_context(ContextKind::Match, body.span);
-                        print_expr(self.depth(), &expr.kind, body.span, self.source_map);
                         self.visit_expr(body);
                         self.pop_context();
                     }
@@ -261,47 +236,28 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
             }
             ExprKind::Closure(closure) => {
                 self.push_context(ContextKind::Closure, closure.body.span);
-                println!(
-                    "CLOSURE: inside_fn {}, depth: {}",
-                    self.inside_fn,
-                    self.depth()
-                );
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.visit_expr(&closure.body);
             }
             ExprKind::Block(block, label) => {
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.visit_block(block);
             }
             ExprKind::Gen(_capture_by, block, _gen_block_kind, _span) => {
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.visit_block(block);
             }
             ExprKind::TryBlock(block) => {
-                print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
                 self.visit_block(block);
             }
             ExprKind::Call(call_expr, _) => {
                 self.visit_expr(call_expr);
             }
-            _kind => {
-                // println!(
-                //     "---- SKIP KIND ----: {} -- {}",
-                //     debug_expr_kind(kind),
-                //     self.debug_code(expr.span)
-                // );
-                // print_expr(self.depth(), &expr.kind, expr.span, self.source_map);
-            }
+            _kind => {}
         }
     }
 
     fn visit_item(&mut self, item: &'a Item) -> Self::Result {
-        // println!("VISIT ITEM: {} {:?}", self.depth(), item.kind.descr());
         match &item.kind {
             ItemKind::Static(static_item) => {
                 if let Some(expr) = &static_item.expr {
-                    println!("STATIC ITEM: {}", static_item.ident);
-                    println!("STATIC ITEM EXPR: {expr:?}");
                     self.push_context(ContextKind::Static, item.span);
                     self.visit_expr(expr);
                     self.pop_context();
@@ -331,31 +287,12 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
         }
     }
 
-    // TODO: remove? never gets called
-    // fn visit_fn(&mut self, kind: FnKind<'a>, span: Span, _: NodeId) -> Self::Result {
-    //     match kind {
-    //         FnKind::Fn(_, _, func) => {
-    //             println!("visit_fn fn {}, inside_fn {}", func.ident, self.inside_fn);
-    //             self.process_fn(func, span)
-    //         }
-    //         FnKind::Closure(_, _, _, expr) => {
-    //             self.push_context(ContextKind::Closure, span);
-    //             self.visit_expr(expr);
-    //             self.pop_context();
-    //         }
-    //     }
-    // }
-
     fn visit_stmt(&mut self, stmt: &'a Stmt) -> Self::Result {
         match &stmt.kind {
             StmtKind::Let(local) => match &local.kind {
                 LocalKind::Decl => {}
-                LocalKind::Init(expr) => {
-                    // println!("LocalKind::Init {}", self.debug_code(expr.span));
-                    self.visit_expr(expr)
-                }
+                LocalKind::Init(expr) => self.visit_expr(expr),
                 LocalKind::InitElse(expr, block) => {
-                    // println!("LocalKind::InitElse {}", self.debug_code(expr.span));
                     self.visit_expr(expr);
                     self.visit_block(block);
                 }
@@ -424,30 +361,15 @@ impl<'a> NestingDepthVisitor<'a> {
         match &expr.kind {
             ExprKind::If(_, block, else_expr) => {
                 self.push_context(ContextKind::If, block.span);
-                // println!(
-                //     "process_if: IF {} {}",
-                //     self.depth(),
-                //     self.debug_span(block.span)
-                // );
                 self.visit_block(block);
                 self.pop_context();
 
                 if let Some(else_expr) = else_expr {
-                    // println!(
-                    //     "process_if: ELSE {} {}",
-                    //     self.depth(),
-                    //     self.debug_span(else_expr.span)
-                    // );
                     self.process_if(else_expr);
                 }
             }
             ExprKind::Block(block, _) => {
                 self.push_context(ContextKind::Else, block.span);
-                // println!(
-                //     "process_if: ELSE BLOCK {} {}",
-                //     self.depth(),
-                //     self.debug_span(block.span)
-                // );
                 self.visit_block(block);
                 self.pop_context();
             }
@@ -464,18 +386,9 @@ impl<'a> NestingDepthVisitor<'a> {
             self.push_context(ContextKind::Func, span);
         }
         self.inside_fn = true;
-        println!(
-            "process_fn func {}, inside_fn {}, was_inside_fn {}",
-            func.ident, self.inside_fn, was_inside_fn
-        );
-
         self.visit_block(body);
         self.pop_context();
         self.inside_fn = was_inside_fn;
-        println!(
-            "DONE process_fn func {}, inside_fn {}, was_inside_fn {}",
-            func.ident, self.inside_fn, was_inside_fn
-        );
     }
 }
 
