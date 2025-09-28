@@ -44,11 +44,11 @@ impl Default for Config {
 }
 
 /// Lint for detecting nesting that is too deep
-pub struct ControlFlow {
+pub struct NestingDepth {
     config: Config,
 }
 
-impl Default for ControlFlow {
+impl Default for NestingDepth {
     fn default() -> Self {
         Self {
             config: config_or_default(env!("CARGO_PKG_NAME")),
@@ -100,10 +100,10 @@ dylint_linting::impl_pre_expansion_lint! {
     ///     // Do nothing
     /// }
     /// ```
-    pub CONTROL_FLOW,
+    pub NESTING_DEPTH,
     Warn,
     "nested if-then-else and other branching should be simplified",
-    ControlFlow::default()
+    NestingDepth::default()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -146,12 +146,12 @@ impl<'a> Context<'a> {
     }
 }
 
-struct MyVisitor<'a> {
+struct NestingDepthVisitor<'a> {
     contexts: Vec<Context<'a>>,
     source_map: &'a SourceMap,
 }
 
-impl<'a> Visitor<'a> for MyVisitor<'a> {
+impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
     type Result = ();
 
     fn visit_block(&mut self, block: &'a Block) -> Self::Result {
@@ -286,7 +286,7 @@ impl<'a> Visitor<'a> for MyVisitor<'a> {
     }
 }
 
-impl<'a> MyVisitor<'a> {
+impl<'a> NestingDepthVisitor<'a> {
     fn new(source_map: &'a SourceMap) -> Self {
         Self {
             contexts: Vec::new(),
@@ -352,11 +352,11 @@ impl<'a> MyVisitor<'a> {
     }
 }
 
-impl EarlyLintPass for ControlFlow {
+impl EarlyLintPass for NestingDepth {
     #[inline(always)]
     fn check_crate(&mut self, cx: &EarlyContext<'_>, cr: &rustc_ast::Crate) {
         let source_map = cx.sess().source_map();
-        let mut visitor = MyVisitor::new(source_map);
+        let mut visitor = NestingDepthVisitor::new(source_map);
         visitor.visit_crate(cr);
     }
 }

@@ -412,16 +412,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "control_flow"
-version = "0.1.0"
-dependencies = [
- "dylint_linting",
- "dylint_uitesting",
- "serde",
- "serde-inline-default",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1160,6 +1150,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "536bfad37a309d62069485248eeaba1e8d9853aaf951caaeaed0585a95346f08"
 dependencies = [
  "windows-sys 0.61.0",
+]
+
+[[package]]
+name = "nesting_depth"
+version = "0.1.0"
+dependencies = [
+ "dylint_linting",
+ "dylint_uitesting",
+ "serde",
+ "serde-inline-default",
 ]
 
 [[package]]
@@ -1902,9 +1902,9 @@ checksum = "fcc842091f2def52017664b53082ecbbeb5c7731092bad69d2c63050401dfd64"
 name = "toms-lints"
 version = "1.0.0"
 dependencies = [
- "control_flow",
  "dylint_linting",
  "eol_comments",
+ "nesting_depth",
  "uninlined_format_args",
 ]
 

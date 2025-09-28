@@ -11,6 +11,6 @@ extern crate rustc_session;
 pub fn register_lints(sess: &rustc_session::Session, lint_store: &mut rustc_lint::LintStore) {
     eol_comments::register_lints(sess, lint_store);
     // nesting_too_deep::register_lints(sess, lint_store);
-    control_flow::register_lints(sess, lint_store);
+    nesting_depth::register_lints(sess, lint_store);
     uninlined_format_args::register_lints(sess, lint_store);
 }

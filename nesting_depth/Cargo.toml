@@ -1,5 +1,5 @@
 [package]
-name = "control_flow"
+name = "nesting_depth"
 version = "0.1.0"
 authors = ["Tom Grushka"]
 description = "Lint for nested if/then/else and other branching that is too many levels deep"
@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 rlib = ["dylint_linting/constituent"]
 
 [[example]]
-name = "control_flow"
+name = "nesting_depth"
 path = "ui/main.rs"
 
 [dependencies]
