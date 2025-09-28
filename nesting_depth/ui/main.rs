@@ -2,10 +2,10 @@
 use std::sync::LazyLock;
 
 static LAZY_VALUE: LazyLock<i32> = LazyLock::new(|| {
-    //~v ERROR: 4 levels
     if let Some(config) = Some(42) {
         if config > 0 {
             if let Ok(validated) = Ok::<i32, &str>(config) {
+                //~v ERROR: 4 levels
                 if validated == 42 { 42 } else { 0 }
             } else {
                 0
@@ -19,10 +19,10 @@ static LAZY_VALUE: LazyLock<i32> = LazyLock::new(|| {
 });
 
 fn two() {
-    //~v ERROR: 5 levels
     let standalone_closure = || {
         if let Some(data) = Some(15) {
             if data > 10 {
+                //~v ERROR: 5 levels
                 if data < 50 {
                     if data % 5 == 0 {
                         println!("Closure nesting level 4!");
@@ -33,10 +33,10 @@ fn two() {
     };
     standalone_closure();
 
-    //~v ERROR: 4 levels
     let outer_closure = || {
         let inner_closure = || {
             if let Ok(status) = Ok::<bool, &str>(true) {
+                //~v ERROR: 4 levels
                 if status {
                     println!("Nested closure with if nesting level 4!");
                 }
@@ -56,9 +56,39 @@ fn four() {
             18 => {
                 let _ = 20;
             }
-            _ => {}
+            _ => {
+                if tag_id > 5 {
+                    let _ = String::new();
+                    //~v ERROR: 5 levels
+                    if tag_id < 15 {
+                        let _ = String::new();
+                        if tag_id % 2 == 0 {
+                            let _ = String::new();
+                        }
+                    }
+                }
+            }
         }
     }
+
+    let tag_id = 5;
+    let string = match tag_id {
+        10 => String::new(),
+        18 => String::new(),
+        _ => {
+            if tag_id > 5 {
+                let _ = String::new();
+                if tag_id < 15 {
+                    let _ = String::new();
+                    //~v ERROR: 4 levels
+                    if tag_id % 2 == 0 {
+                        let _ = String::new();
+                    }
+                }
+            }
+            String::new()
+        }
+    };
 
     while let Some(message_tag) = Some(10) {
         match message_tag {
@@ -114,6 +144,7 @@ fn seven() {
             println!("x < 2");
             if x < 5 {
                 println!("x < 5");
+                //~v ERROR: 5 levels
                 if x < 10 {
                     println!("x < 10");
                     if x < 20 {
@@ -122,6 +153,7 @@ fn seven() {
                         println!("x < 30");
                     } else if x < 40 {
                         println!("x < 40");
+                    //~v ERROR: 5 found
                     } else if x < 50 {
                         println!("x < 50");
                     } else {
@@ -136,6 +168,7 @@ fn seven() {
         println!("x < 2");
     } else if x < 3 {
         println!("x < 3");
+    //~v ERROR: 11 found
     } else if x < 4 {
         println!("x < 4");
     } else if x < 5 {

@@ -1,45 +1,164 @@
-error: nested structure is 4 levels deep (max: 3)
-  --> ui/main.rs:6:5
+error: nesting depth: 3 max allowed, 4 levels found
+  --> ui/main.rs:9:17
    |
- 6 | /     if let Some(config) = Some(42) {
- 7 | |         if config > 0 {
- 8 | |             if let Ok(validated) = Ok::<i32, &str>(config) {
+ 5 | /     if let Some(config) = Some(42) {
+ 6 | |         if config > 0 {
+ 7 | |             if let Ok(validated) = Ok::<i32, &str>(config) {
+ 8 | |
  9 | |                 if validated == 42 { 42 } else { 0 }
+   | |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ...  |
 17 | |         0
 18 | |     }
-   | |_____^
+   | |_____- outer nested context
    |
    = help: use early returns and guard clauses to reduce nesting
-   = note: `-D nesting-too-deep` implied by `-D warnings`
-   = help: to override `-D warnings` add `#[allow(nesting_too_deep)]`
+   = note: `-D nesting-depth` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(nesting_depth)]`
 
-error: nested structure is 5 levels deep (max: 3)
-  --> ui/main.rs:23:5
+error: nesting depth: 3 max allowed, 4 to 5 levels found
+  --> ui/main.rs:26:17
    |
-23 | /     let standalone_closure = || {
-24 | |         if let Some(data) = Some(15) {
-25 | |             if data > 10 {
-26 | |                 if data < 50 {
+22 |        let standalone_closure = || {
+   |  __________________________________-
+23 | |          if let Some(data) = Some(15) {
+24 | |              if data > 10 {
+25 | |
+26 | |/                 if data < 50 {
+27 | ||                     if data % 5 == 0 {
+28 | ||                         println!("Closure nesting level 4!");
+29 | ||                     }
+30 | ||                 }
+   | ||_________________^
 ...  |
-33 | |     };
-   | |______^
+33 | |      };
+   | |______- outer nested context
    |
    = help: use early returns and guard clauses to reduce nesting
 
-error: nested structure is 4 levels deep (max: 3)
-  --> ui/main.rs:37:5
+error: nesting depth: 3 max allowed, 4 levels found
+  --> ui/main.rs:40:17
    |
-37 | /     let outer_closure = || {
-38 | |         let inner_closure = || {
-39 | |             if let Ok(status) = Ok::<bool, &str>(true) {
-40 | |                 if status {
+36 |        let outer_closure = || {
+   |  _____________________________-
+37 | |          let inner_closure = || {
+38 | |              if let Ok(status) = Ok::<bool, &str>(true) {
+39 | |
+40 | |/                 if status {
+41 | ||                     println!("Nested closure with if nesting level 4!");
+42 | ||                 }
+   | ||_________________^
 ...  |
-45 | |         inner_closure();
-46 | |     };
-   | |______^
+45 | |          inner_closure();
+46 | |      };
+   | |______- outer nested context
    |
    = help: use early returns and guard clauses to reduce nesting
 
-error: aborting due to 3 previous errors
+error: nesting depth: 3 max allowed, 4 to 5 levels found
+  --> ui/main.rs:63:21
+   |
+51 | /      while let Some(tag_id) = Some(10) {
+52 | |          match tag_id {
+53 | |              10 => {
+54 | |                  let _ = String::new();
+...  |
+63 | |/                     if tag_id < 15 {
+64 | ||                         let _ = String::new();
+65 | ||                         if tag_id % 2 == 0 {
+66 | ||                             let _ = String::new();
+67 | ||                         }
+68 | ||                     }
+   | ||_____________________^
+...  |
+72 | |      }
+   | |______- outer nested context
+   |
+   = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 levels found
+  --> ui/main.rs:84:21
+   |
+78 |            _ => {
+   |  _______________-
+79 | |              if tag_id > 5 {
+80 | |                  let _ = String::new();
+81 | |                  if tag_id < 15 {
+...  |
+84 | |/                     if tag_id % 2 == 0 {
+85 | ||                         let _ = String::new();
+86 | ||                     }
+   | ||_____________________^
+...  |
+89 | |              String::new()
+90 | |          }
+   | |__________- outer nested context
+   |
+   = help: use early returns and guard clauses to reduce nesting
+
+error: consecutive if-else statements: 3 max allowed, 5 found
+   --> ui/main.rs:157:28
+    |
+150 | /                      if x < 20 {
+151 | |                          println!("x < 20");
+152 | |                      } else if x < 30 {
+153 | |                          println!("x < 30");
+...   |
+157 | |                      } else if x < 50 {
+    | | ____________________________^
+158 | ||                         println!("x < 50");
+159 | ||                     } else {
+160 | ||                         println!("x >= 50");
+161 | ||                     }
+    | ||_____________________^ first if in sequence
+    |  |_____________________|
+    |
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 to 5 levels found
+   --> ui/main.rs:148:17
+    |
+141 | /      if x < 1 {
+142 | |          println!("x < 1");
+143 | |          if x < 2 {
+144 | |              println!("x < 2");
+...   |
+148 | |/                 if x < 10 {
+149 | ||                     println!("x < 10");
+150 | ||                     if x < 20 {
+151 | ||                         println!("x < 20");
+...   ||
+162 | ||                 }
+    | ||_________________^
+...   |
+187 | |          println!("x >= 10");
+188 | |      }
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: consecutive if-else statements: 3 max allowed, 11 found
+   --> ui/main.rs:172:12
+    |
+141 | /      if x < 1 {
+142 | |          println!("x < 1");
+143 | |          if x < 2 {
+144 | |              println!("x < 2");
+...   |
+172 | |      } else if x < 4 {
+    | | ____________^
+173 | ||         println!("x < 4");
+174 | ||     } else if x < 5 {
+175 | ||         println!("x < 5");
+...   ||
+187 | ||         println!("x >= 10");
+188 | ||     }
+    | ||_____^ first if in sequence
+    |  |_____|
+    |
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: aborting due to 8 previous errors
 
