@@ -26,6 +26,8 @@ const DEFAULT_MAX_ITEMS: usize = 10;
 
 const HELP_MESSAGE: &str = "use early returns and guard clauses to reduce nesting";
 
+const DEBUG: bool = true;
+
 /// Lint configuration
 #[serde_inline_default]
 #[derive(Deserialize)]
@@ -34,7 +36,7 @@ struct Config {
     max_depth: usize,
     #[serde_inline_default(DEFAULT_MAX_ITEMS)]
     max_items: usize,
-    #[serde_inline_default(false)]
+    #[serde_inline_default(DEBUG)]
     debug: bool,
 }
 
@@ -43,7 +45,7 @@ impl Default for Config {
         Self {
             max_depth: DEFAULT_MAX_DEPTH,
             max_items: DEFAULT_MAX_ITEMS,
-            debug: false,
+            debug: DEBUG,
         }
     }
 }
@@ -159,11 +161,18 @@ impl Reason {
     fn message(&self, config: &Config) -> String {
         let label = self.label();
         match self {
-            Reason::Depth(depth) => format!(
-                "{label}: {max} max allowed, reaches {max_1} to {depth} levels",
-                max = config.max_depth,
-                max_1 = config.max_depth + 1
-            ),
+            Reason::Depth(depth) => {
+                let max_1 = config.max_depth + 1;
+                let levels_desc = if *depth > max_1 {
+                    format!("{max_1} to {depth} levels")
+                } else {
+                    format!("{depth} levels")
+                };
+                format!(
+                    "{label}: {max} max allowed, reaches {levels_desc}",
+                    max = config.max_depth,
+                )
+            }
         }
     }
 }
@@ -184,25 +193,50 @@ struct NestingDepthVisitor<'a> {
     inside_fn: bool,
 }
 
-impl<'a> NestingDepthVisitor<'a> {
-    const DEBUG_SPAN: SpanInfo = SpanInfo {
-        file: "main.rs",
-        start_line: 15,
-        end_line: 30,
-    };
+fn span_info_for_debug() -> Option<SpanInfo> {
+    Some(SpanInfo {
+        file: String::from("ui/main.rs"),
+        // start_line: 4,
+        // end_line: 19,
+        start_line: 0,
+        end_line: 200,
+    })
+}
 
-    fn debug_visit(&self, method: &str, span: Span, extra: &str) {
+impl<'a> NestingDepthVisitor<'a> {
+    fn debug_visit(&self, method: &str, span: Span) {
+        self.debug_visit_with(method, span, false, None);
+    }
+
+    fn debug_visit_with(&self, method: &str, span: Span, code: bool, extra: Option<&str>) {
         if !self.config.debug {
             return;
         }
-        let info = self.debug_span_info(span);
-        if !Self::DEBUG_SPAN.contains(&info) {
+        let Some(span_info) = span_info_for_debug() else {
+            return;
+        };
+        if !span_info.contains(&self.debug_span_info(span)) {
             return;
         }
-        let code = self.debug_code(span);
+        let info = self.debug_span_info(span);
+        let code = code.then(|| self.debug_code(span));
         let depth = self.depth();
         let span = self.debug_span(span);
-        println!("{method} [depth {depth}] @ {span} | {extra} | {code}");
+        let mut debug_str = String::new();
+        for _ in 1..=depth {
+            debug_str.push_str("  ");
+        }
+        debug_str.push_str(method);
+        debug_str.push_str(" [");
+        debug_str.push_str(&depth.to_string());
+        debug_str.push(']');
+        debug_str.push_str(" [");
+        debug_str.push_str(&span);
+        debug_str.push(']');
+        if let Some(code) = code {
+            debug_str.push_str(&code);
+        }
+        println!("{debug_str}");
     }
 }
 
@@ -210,6 +244,7 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
     type Result = ();
 
     fn visit_block(&mut self, block: &'a Block) -> Self::Result {
+        self.debug_visit("block", block.span);
         for stmt in &block.stmts {
             self.visit_stmt(stmt);
         }
@@ -222,8 +257,7 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
     }
 
     fn visit_expr(&mut self, expr: &'a Expr) -> Self::Result {
-        let depth = self.depth();
-
+        self.debug_visit(&format!("expr {}", debug_expr_kind(&expr.kind)), expr.span);
         match &expr.kind {
             ExprKind::Let(_pat, let_expr, _span, _recovered) => {
                 self.push_context(ContextKind::Let, expr.span);
@@ -272,20 +306,33 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
             ExprKind::TryBlock(block) => {
                 self.visit_block(block);
             }
-            ExprKind::Call(call_expr, _) => {
-                self.visit_expr(call_expr);
+            ExprKind::Call(_call_expr, args) => {
+                // TODO: do we even need to visit call expr?
+                // self.visit_expr(call_expr);
+                for arg in args {
+                    self.visit_expr(arg);
+                }
+                // println!("CALL ARGS len {}: {args:#?}", args.len());
+                // self.visit_expr(call_expr);
             }
-            _kind => {}
+            kind => {
+                // println!(
+                //     "\n\n*** MISSING EXPR KIND: {} @ {} ***\n\n",
+                //     debug_expr_kind(kind),
+                //     self.debug_span(expr.span)
+                // );
+            }
         }
     }
 
     fn visit_item(&mut self, item: &'a Item) -> Self::Result {
+        self.debug_visit("item", item.span);
+
         match &item.kind {
             ItemKind::Static(static_item) => {
                 if let Some(expr) = &static_item.expr {
-                    self.push_context(ContextKind::Static, item.span);
+                    self.debug_visit("item Static expr", expr.span);
                     self.visit_expr(expr);
-                    self.pop_context();
                 }
             }
             ItemKind::Fn(func) => self.process_fn(func, item.span),
@@ -308,11 +355,18 @@ impl<'a> Visitor<'a> for NestingDepthVisitor<'a> {
                     }
                 }
             }
-            _ => {}
+            kind => {
+                // println!(
+                //     "\n\n*** MISSING ITEM KIND: {kind:?} @ {} ***\n\n",
+                //     self.debug_span(item.span)
+                // );
+            }
         }
     }
 
     fn visit_stmt(&mut self, stmt: &'a Stmt) -> Self::Result {
+        self.debug_visit("stmt", stmt.span);
+
         match &stmt.kind {
             StmtKind::Let(local) => match &local.kind {
                 LocalKind::Decl => {}
@@ -387,6 +441,8 @@ impl<'a> NestingDepthVisitor<'a> {
     }
 
     fn process_if(&mut self, expr: &'a Expr) {
+        self.debug_visit("process_if", expr.span);
+
         match &expr.kind {
             ExprKind::If(_, block, else_expr) => {
                 self.push_context(ContextKind::If, block.span);
@@ -407,9 +463,12 @@ impl<'a> NestingDepthVisitor<'a> {
     }
 
     fn process_fn(&mut self, func: &'a rustc_ast::Fn, span: Span) {
+        self.debug_visit("process_fn", func.sig.span);
+
         let Some(body) = &func.body else {
             return;
         };
+
         let was_inside_fn = self.inside_fn;
         if was_inside_fn {
             self.push_context(ContextKind::Func, span);
@@ -439,7 +498,7 @@ impl EarlyLintPass for NestingDepth {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct SpanInfo {
-    file: &'static str,
+    file: String,
     start_line: usize,
     end_line: usize,
 }
