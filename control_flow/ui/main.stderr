@@ -1,0 +1,45 @@
+error: nested structure is 4 levels deep (max: 3)
+  --> ui/main.rs:6:5
+   |
+ 6 | /     if let Some(config) = Some(42) {
+ 7 | |         if config > 0 {
+ 8 | |             if let Ok(validated) = Ok::<i32, &str>(config) {
+ 9 | |                 if validated == 42 { 42 } else { 0 }
+...  |
+17 | |         0
+18 | |     }
+   | |_____^
+   |
+   = help: use early returns and guard clauses to reduce nesting
+   = note: `-D nesting-too-deep` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(nesting_too_deep)]`
+
+error: nested structure is 5 levels deep (max: 3)
+  --> ui/main.rs:23:5
+   |
+23 | /     let standalone_closure = || {
+24 | |         if let Some(data) = Some(15) {
+25 | |             if data > 10 {
+26 | |                 if data < 50 {
+...  |
+33 | |     };
+   | |______^
+   |
+   = help: use early returns and guard clauses to reduce nesting
+
+error: nested structure is 4 levels deep (max: 3)
+  --> ui/main.rs:37:5
+   |
+37 | /     let outer_closure = || {
+38 | |         let inner_closure = || {
+39 | |             if let Ok(status) = Ok::<bool, &str>(true) {
+40 | |                 if status {
+...  |
+45 | |         inner_closure();
+46 | |     };
+   | |______^
+   |
+   = help: use early returns and guard clauses to reduce nesting
+
+error: aborting due to 3 previous errors
+

@@ -7,7 +7,7 @@ edition = "2024"
 
 [workspace]
 resolver = "3"
-members = ["clippy", "eol_comments", "nesting_too_deep", "try_io_result", "uninlined_format_args"]
+members = ["clippy", "eol_comments", "nesting_too_deep", "control_flow", "try_io_result", "uninlined_format_args"]
 
 # constituent library: https://github.com/trailofbits/dylint/blob/master/utils/linting/README.md#constituent-feature
 [lib]
@@ -15,7 +15,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 dylint_linting.workspace = true
-nesting_too_deep = { path = "nesting_too_deep", features = ["rlib"] }
+# nesting_too_deep = { path = "nesting_too_deep", features = ["rlib"] }
+control_flow = { path = "control_flow", features = ["rlib"] }
 uninlined_format_args = { path = "uninlined_format_args", features = ["rlib"] }
 eol_comments = { path = "eol_comments", features = ["rlib"] }
 
