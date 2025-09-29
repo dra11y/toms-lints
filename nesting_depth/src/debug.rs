@@ -52,6 +52,7 @@ impl NestingDepth {
         code: bool,
         extra: Option<&str>,
     ) {
+        return;
         if !self.config.debug {
             return;
         }
