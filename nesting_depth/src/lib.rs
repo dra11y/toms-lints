@@ -135,6 +135,13 @@ dylint_linting::impl_pre_expansion_lint! {
     NestingDepth::default()
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum IfElseState {
+    None,
+    If,
+    Else,
+}
+
 #[derive(Debug, Clone)]
 enum ContextKind {
     Item(ItemKind),
@@ -180,6 +187,7 @@ impl PartialEq for ContextKind {
 struct Context {
     span: Span,
     kind: ContextKind,
+    if_else_state: IfElseState,
     consec_if_else_span: Option<Span>,
     consec_if_else_count: usize,
     consec_if_else_lint: Option<Lint>,
@@ -196,6 +204,7 @@ impl Context {
         Self {
             span,
             kind,
+            if_else_state: IfElseState::None,
             consec_if_else_span: None,
             consec_if_else_count: 0,
             consec_if_else_lint: None,
@@ -463,26 +472,32 @@ impl EarlyLintPass for NestingDepth {
 
     #[inline(always)]
     fn check_expr(&mut self, cx: &EarlyContext<'_>, expr: &Expr) {
-        // self.debug_visit_extra(
-        //     cx,
-        //     "check_expr start",
-        //     expr.span,
-        //     debug_expr_kind(&expr.kind),
-        // );
+        self.debug_visit_extra(
+            cx,
+            "check_expr start",
+            expr.span,
+            debug_expr_kind(&expr.kind),
+        );
+
+        if let ExprKind::If(_cond, _block, _else_expr) = &expr.kind {
+            if let Some(ctx) = self.contexts.last_mut() {
+                ctx.if_else_state = IfElseState::If;
+            }
+        };
 
         let Some(kind) = expr_context_kind(expr, false, self.contexts.last()) else {
             return;
         };
 
-        let descr = kind.descr();
-        if matches!(kind, ContextKind::Else) {
-            self.contexts.pop();
-            self.replace_context_kind(cx, ContextKind::Else);
-        } else {
-            self.push_context(cx, kind, expr.span);
-        }
+        // let descr = kind.descr();
+        // if matches!(kind, ContextKind::Else) {
+        //     self.contexts.pop();
+        //     self.replace_context_kind(cx, ContextKind::Else);
+        // } else {
+        //     self.push_context(cx, kind, expr.span);
+        // }
 
-        self.debug_visit_extra(cx, "check_expr", expr.span, descr);
+        // self.debug_visit_extra(cx, "check_expr", expr.span, descr);
     }
 
     #[inline(always)]
