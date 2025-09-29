@@ -137,6 +137,34 @@ fn six() {
 // should not lint
 // TODO: check for too many else ifs -- we need a more complex linter for control flow
 fn seven() {
+    fn eight() {
+        let y = 1;
+        if y < 1 {
+            println!("y < 1");
+            if y < 2 {
+                println!("y < 2");
+                if y < 5 {
+                    println!("y < 5");
+                    if y < 10 {
+                        println!("y < 10");
+                        if y < 20 {
+                            println!("y < 20");
+                        } else if y < 30 {
+                            println!("y < 30");
+                        } else if y < 40 {
+                            println!("y < 40");
+                        } else if y < 50 {
+                            println!("y < 50");
+                        } else {
+                            println!("y >= 50");
+                        }
+                    }
+                }
+            } else if y < 3 {
+                println!("y < 3");
+            }
+        }
+    }
     let x = 1;
     if x < 1 {
         println!("x < 1");
@@ -156,8 +184,12 @@ fn seven() {
                     //~v ERROR: 5 found
                     } else if x < 50 {
                         println!("x < 50");
+                    } else if x < 60 {
+                        println!("x < 60");
+                    } else if x < 70 {
+                        println!("x < 70");
                     } else {
-                        println!("x >= 50");
+                        println!("x >= 70");
                     }
                 }
             }
