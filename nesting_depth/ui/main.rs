@@ -30,8 +30,10 @@ fn two() {
     let standalone_closure = || {
         if let Some(data) = Some(15) {
             if data > 10 {
-                //~v ERROR: 5 levels
+                // if ignore_closures == false:
+                // (~v ERROR: 5 levels)
                 if data < 50 {
+                    //~v ERROR: 4 levels
                     if data % 5 == 0 {
                         println!("Closure nesting level 4!");
                     }
@@ -44,7 +46,8 @@ fn two() {
     let outer_closure = || {
         let inner_closure = || {
             if let Ok(status) = Ok::<bool, &str>(true) {
-                //~v ERROR: 4 levels
+                // if ignore_closures == false:
+                // (~v ERROR: 4 levels)
                 if status {
                     println!("Nested closure with if nesting level 4!");
                 }
@@ -301,8 +304,10 @@ fn edge_mixed_match_loop_closure(flag: bool, code: u32) {
         match code {
             0 => {
                 let f = || {
-                    //~v ERROR: 7 levels
+                    // if ignore_closures == false:
+                    // (~v ERROR: 7 levels)
                     if flag {
+                        //~v ERROR: 6 levels
                         if code == 0 {
                             if i == 0 {
                                 if i < 10 {
@@ -388,10 +393,12 @@ fn edge_multiple_closures_layers(x: i32) {
     let outer = || {
         let mid = || {
             let inner = || {
-                //~v ERROR: 7 levels
+                // if ignore_closures == false:
+                // (~v ERROR: 7 levels)
                 if x > 0 {
                     if x > 1 {
                         if x > 2 {
+                            //~v ERROR: 4 levels
                             if x > 3 {
                                 let _ = x;
                             }

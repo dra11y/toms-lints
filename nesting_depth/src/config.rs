@@ -8,6 +8,9 @@ pub const HELP_MESSAGE: &str = "use early returns and guard clauses to reduce ne
 /// Default maximum nesting levels
 const DEFAULT_MAX_DEPTH: usize = 3;
 
+/// Default ignore closures when counting depth
+const DEFAULT_IGNORE_CLOSURES: bool = true;
+
 /// Default maximum items in an if-then block
 const DEFAULT_MAX_THEN_ITEMS: usize = 20;
 
@@ -23,6 +26,10 @@ pub struct Config {
     /// Maximum allowed nesting depth
     #[serde_inline_default(DEFAULT_MAX_DEPTH)]
     pub max_depth: usize,
+
+    /// Ignore closures when counting depth
+    #[serde_inline_default(DEFAULT_IGNORE_CLOSURES)]
+    pub ignore_closures: bool,
 
     /// Maximum allowed items in an if-then block
     #[serde_inline_default(DEFAULT_MAX_THEN_ITEMS)]
@@ -45,6 +52,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             max_depth: DEFAULT_MAX_DEPTH,
+            ignore_closures: DEFAULT_IGNORE_CLOSURES,
             max_then_items: DEFAULT_MAX_THEN_ITEMS,
             max_consec_if_else: DEFAULT_MAX_CONSEC_IF_ELSE,
             debug: DEFAULT_DEBUG,

@@ -37,285 +37,261 @@ error: nesting depth: 3 max allowed, 4 levels found
    |
    = help: use early returns and guard clauses to reduce nesting
 
-error: nesting depth: 3 max allowed, 4 to 5 levels found
-  --> ui/main.rs:34:17
+error: nesting depth: 3 max allowed, 4 levels found
+  --> ui/main.rs:37:21
    |
 30 |        let standalone_closure = || {
    |  __________________________________-
 31 | |          if let Some(data) = Some(15) {
 32 | |              if data > 10 {
-33 | |
-34 | |/                 if data < 50 {
-35 | ||                     if data % 5 == 0 {
-36 | ||                         println!("Closure nesting level 4!");
-37 | ||                     }
-38 | ||                 }
-   | ||_________________^
 ...  |
-41 | |      };
-   | |______- outer nested context
-   |
-   = help: use early returns and guard clauses to reduce nesting
-
-error: nesting depth: 3 max allowed, 4 levels found
-  --> ui/main.rs:48:17
-   |
-44 |        let outer_closure = || {
-   |  _____________________________-
-45 | |          let inner_closure = || {
-46 | |              if let Ok(status) = Ok::<bool, &str>(true) {
-47 | |
-48 | |/                 if status {
-49 | ||                     println!("Nested closure with if nesting level 4!");
-50 | ||                 }
-   | ||_________________^
+37 | |/                     if data % 5 == 0 {
+38 | ||                         println!("Closure nesting level 4!");
+39 | ||                     }
+   | ||_____________________^
 ...  |
-53 | |          inner_closure();
-54 | |      };
+43 | |      };
    | |______- outer nested context
    |
    = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 to 5 levels found
-  --> ui/main.rs:71:21
+  --> ui/main.rs:74:21
    |
-60 | /          match tag_id {
-61 | |              10 => {
-62 | |                  let _ = String::new();
+63 | /          match tag_id {
+64 | |              10 => {
+65 | |                  let _ = String::new();
 ...  |
-71 | |/                     if tag_id < 15 {
-72 | ||                         let _ = String::new();
-73 | ||                         if tag_id % 2 == 0 {
-74 | ||                             let _ = String::new();
-75 | ||                         }
-76 | ||                     }
+74 | |/                     if tag_id < 15 {
+75 | ||                         let _ = String::new();
+76 | ||                         if tag_id % 2 == 0 {
+77 | ||                             let _ = String::new();
+78 | ||                         }
+79 | ||                     }
    | ||_____________________^
 ...  |
-79 | |          }
+82 | |          }
    | |__________- outer nested context
    |
    = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 to 5 levels found
-  --> ui/main.rs:90:17
-   |
-83 |        let string = match tag_id {
-   |  ___________________-
-84 | |          10 => String::new(),
-85 | |          18 => String::new(),
-86 | |          _ => {
-...  |
-90 | |/                 if tag_id < 15 {
-91 | ||                     let _ = String::new();
-92 | ||                     if tag_id % 2 == 0 {
-93 | ||                         let _ = String::new();
-94 | ||                     }
-95 | ||                 }
-   | ||_________________^
-...  |
-99 | |      };
-   | |______- outer nested context
-   |
-   = help: use early returns and guard clauses to reduce nesting
-
-error: nesting depth: 3 max allowed, 4 to 6 levels found
-   --> ui/main.rs:155:17
+   --> ui/main.rs:93:17
     |
-148 | /      fn eight() {
-149 | |          let y = 1;
-150 | |          if y < 1 {
-151 | |              println!("y < 1");
+ 86 |        let string = match tag_id {
+    |  ___________________-
+ 87 | |          10 => String::new(),
+ 88 | |          18 => String::new(),
+ 89 | |          _ => {
 ...   |
-155 | |/                 if y < 5 {
-156 | ||                     println!("y < 5");
-157 | ||                     if y < 10 {
-158 | ||                         println!("y < 10");
-...   ||
-171 | ||                 }
+ 93 | |/                 if tag_id < 15 {
+ 94 | ||                     let _ = String::new();
+ 95 | ||                     if tag_id % 2 == 0 {
+ 96 | ||                         let _ = String::new();
+ 97 | ||                     }
+ 98 | ||                 }
     | ||_________________^
 ...   |
-176 | |      }
+102 | |      };
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 to 6 levels found
+   --> ui/main.rs:158:17
+    |
+151 | /      fn eight() {
+152 | |          let y = 1;
+153 | |          if y < 1 {
+154 | |              println!("y < 1");
+...   |
+158 | |/                 if y < 5 {
+159 | ||                     println!("y < 5");
+160 | ||                     if y < 10 {
+161 | ||                         println!("y < 10");
+...   ||
+174 | ||                 }
+    | ||_________________^
+...   |
+179 | |      }
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 to 5 levels found
-   --> ui/main.rs:186:17
+   --> ui/main.rs:189:17
     |
-179 | /      if x < 1 {
-180 | |          println!("x < 1");
-181 | |          if x < 2 {
-182 | |              println!("x < 2");
+182 | /      if x < 1 {
+183 | |          println!("x < 1");
+184 | |          if x < 2 {
+185 | |              println!("x < 2");
 ...   |
-186 | |/                 if x < 10 {
-187 | ||                     println!("x < 10");
-188 | ||                     if x < 20 {
-189 | ||                         println!("x < 20");
+189 | |/                 if x < 10 {
+190 | ||                     println!("x < 10");
+191 | ||                     if x < 20 {
+192 | ||                         println!("x < 20");
 ...   ||
-203 | ||                 }
+206 | ||                 }
     | ||_________________^
 ...   |
-227 | |          println!("x >= 10");
-228 | |      }
+230 | |          println!("x >= 10");
+231 | |      }
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: consecutive if-else statements: 10 max allowed, 22 found
-   --> ui/main.rs:179:5
+   --> ui/main.rs:182:5
     |
-179 | /     if x < 1 {
-180 | |         println!("x < 1");
-181 | |         if x < 2 {
-182 | |             println!("x < 2");
+182 | /     if x < 1 {
+183 | |         println!("x < 1");
+184 | |         if x < 2 {
+185 | |             println!("x < 2");
 ...   |
-227 | |         println!("x >= 10");
-228 | |     }
+230 | |         println!("x >= 10");
+231 | |     }
     | |_____^
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 levels found
-   --> ui/main.rs:266:17
+   --> ui/main.rs:269:17
     |
-262 | /      if b > 5 {
-263 | |          if b % 2 == 0 {
-264 | |              if b < 20 {
-265 | |
-266 | |/                 if b != 13 {
-267 | ||                     // silence copy drop
-268 | ||                     let _ = b;
-269 | ||                 }
+265 | /      if b > 5 {
+266 | |          if b % 2 == 0 {
+267 | |              if b < 20 {
+268 | |
+269 | |/                 if b != 13 {
+270 | ||                     // silence copy drop
+271 | ||                     let _ = b;
+272 | ||                 }
     | ||_________________^
 ...   |
-272 | |      }
+275 | |      }
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 to 5 levels found
-   --> ui/main.rs:288:17
+   --> ui/main.rs:291:17
     |
-276 | /      if x < 0 {
-277 | |          if x < -5 {
-278 | |              let _ = x;
+279 | /      if x < 0 {
+280 | |          if x < -5 {
+281 | |              let _ = x;
 ...   |
-288 | |/                 if x > 3 {
-289 | ||                     if x > 4 {
-290 | ||                         let _ = x;
-291 | ||                     }
-292 | ||                 }
+291 | |/                 if x > 3 {
+292 | ||                     if x > 4 {
+293 | ||                         let _ = x;
+294 | ||                     }
+295 | ||                 }
     | ||_________________^
 ...   |
-295 | |      }
+298 | |      }
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
-error: nesting depth: 3 max allowed, 4 to 7 levels found
-   --> ui/main.rs:305:21
+error: nesting depth: 3 max allowed, 4 to 6 levels found
+   --> ui/main.rs:311:25
     |
-301 | /          match code {
-302 | |              0 => {
-303 | |                  let f = || {
-304 | |
-305 | |/                     if flag {
-306 | ||                         if code == 0 {
-307 | ||                             if i == 0 {
-308 | ||                                 if i < 10 {
-...   ||
-313 | ||                     }
-    | ||_____________________^
+304 | /          match code {
+305 | |              0 => {
+306 | |                  let f = || {
 ...   |
-322 | |              _ => {}
-323 | |          }
+311 | |/                         if code == 0 {
+312 | ||                             if i == 0 {
+313 | ||                                 if i < 10 {
+314 | ||                                     let _ = i;
+...   ||
+317 | ||                         }
+    | ||_________________________^
+...   |
+327 | |              _ => {}
+328 | |          }
     | |__________- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 to 6 levels found
-   --> ui/main.rs:351:22
+   --> ui/main.rs:356:22
     |
-347 | /      match v {
-348 | |          0 => match v + 1 {
-349 | |              1 => match v + 2 {
-350 | |
-351 | |                  2 => {
+352 | /      match v {
+353 | |          0 => match v + 1 {
+354 | |              1 => match v + 2 {
+355 | |
+356 | |                  2 => {
     | | ______________________^
-352 | ||                     if v == 0 {
-353 | ||                         if v + 3 == 3 {
-354 | ||                             let _ = v;
+357 | ||                     if v == 0 {
+358 | ||                         if v + 3 == 3 {
+359 | ||                             let _ = v;
 ...   ||
-357 | ||                 }
+362 | ||                 }
     | ||_________________^
 ...   |
-362 | |          _ => {}
-363 | |      }
+367 | |          _ => {}
+368 | |      }
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 to 5 levels found
-   --> ui/main.rs:371:21
+   --> ui/main.rs:376:21
     |
-368 | /          if $val > 0 {
-369 | |              if $val > 1 {
-370 | |                  if $val > 2 {
-371 | |/                     if $val > 3 {
-372 | ||                         if $val > 4 {
-373 | ||                             let _ = $val;
-374 | ||                         }
-375 | ||                     }
+373 | /          if $val > 0 {
+374 | |              if $val > 1 {
+375 | |                  if $val > 2 {
+376 | |/                     if $val > 3 {
+377 | ||                         if $val > 4 {
+378 | ||                             let _ = $val;
+379 | ||                         }
+380 | ||                     }
     | ||_____________________^
 ...   |
-378 | |          }
+383 | |          }
     | |__________- outer nested context
 ...
-384 |        make_nested_if!(v);
+389 |        make_nested_if!(v);
     |        ------------------ in this macro invocation
     |
     = help: use early returns and guard clauses to reduce nesting
     = note: this error originates in the macro `make_nested_if` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error: nesting depth: 3 max allowed, 4 to 7 levels found
-   --> ui/main.rs:392:17
+error: nesting depth: 3 max allowed, 4 levels found
+   --> ui/main.rs:402:29
     |
-388 |        let outer = || {
+393 |        let outer = || {
     |  _____________________-
-389 | |          let mid = || {
-390 | |              let inner = || {
-391 | |
-392 | |/                 if x > 0 {
-393 | ||                     if x > 1 {
-394 | ||                         if x > 2 {
-395 | ||                             if x > 3 {
-...   ||
-400 | ||                 }
-    | ||_________________^
+394 | |          let mid = || {
+395 | |              let inner = || {
 ...   |
-404 | |          mid();
-405 | |      };
+402 | |/                             if x > 3 {
+403 | ||                                 let _ = x;
+404 | ||                             }
+    | ||_____________________________^
+...   |
+411 | |          mid();
+412 | |      };
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
 error: nesting depth: 3 max allowed, 4 levels found
-   --> ui/main.rs:414:17
+   --> ui/main.rs:421:17
     |
-410 | /      if cond {
-411 | |          if cond {
-412 | |              if cond {
-413 | |
-414 | |/                 if cond {
-415 | ||                     let _ = cond;
-416 | ||                 }
+417 | /      if cond {
+418 | |          if cond {
+419 | |              if cond {
+420 | |
+421 | |/                 if cond {
+422 | ||                     let _ = cond;
+423 | ||                 }
     | ||_________________^
 ...   |
-421 | |          let _ = cond;
-422 | |      }
+428 | |          let _ = cond;
+429 | |      }
     | |______- outer nested context
     |
     = help: use early returns and guard clauses to reduce nesting
 
-error: aborting due to 16 previous errors
+error: aborting due to 15 previous errors
 
