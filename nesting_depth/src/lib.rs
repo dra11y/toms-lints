@@ -142,7 +142,6 @@ impl NestingDepth {
 
         if ctx.consec_if_branch_count > self.config.max_consec_if_else {
             let outer_span = self.contexts.get(1).map(|ctx| ctx.span);
-            println!("consec if branch count: {}", ctx.consec_if_branch_count);
             self.lints.push(NestingLint {
                 outer_span,
                 span: ctx.span,
@@ -173,22 +172,17 @@ impl NestingDepth {
 
         if ctx.kind.is_if_branch() {
             if let Some(if_parent) = self.find_root_if_parent() {
-                println!("FOUND IF PARENT");
                 match ctx.kind {
                     ContextKind::If => {
-                        if_parent.consec_if_else_count += 1;
+                        // if_parent.consec_if_else_count += 1;
                     }
                     ContextKind::Then | ContextKind::ElseIf | ContextKind::Else => {
                         // These can only exist within a ContextKind::If,
                         // and are automatically "reset" when the current If is popped.
                         if_parent.consec_if_branch_count += 1;
-                        println!(
-                            "parent: {}, consec if branch count: {}",
-                            if_parent.kind, if_parent.consec_if_branch_count
-                        );
                     }
                     _ => {
-                        if_parent.consec_if_else_count = 0;
+                        // if_parent.consec_if_else_count = 0;
                     }
                 }
             } else {
@@ -207,7 +201,6 @@ impl NestingDepth {
         kind: &ContextKind,
         id: &NodeId,
     ) -> Result<(), anyhow::Error> {
-        println!("CALLED POP CONTEXT");
         let mut ctx = self.pop_context_unchecked(cx);
 
         if ctx.kind != *kind {
@@ -339,20 +332,16 @@ impl EarlyLintPass for NestingDepth {
                     }
                 }
             }
-            // enter the `else` block context
             ExprKind::Block(block, _) => {
                 if self.else_block_expr_ids.contains(&expr.id) {
+                    // entered `else` block context
+                    // branch wrappers (ContextKind::If) are only popped in post ExprKind::If
+                    // DO NOT pop context here.
                     self.debug_visit(
                         cx,
                         &format!("ENTER ELSE: {} {}", expr.id, block.id),
                         expr.span,
                     );
-                    if matches!(
-                        self.contexts.last().map(|c| c.kind),
-                        Some(ContextKind::Then | ContextKind::ElseIf)
-                    ) {
-                        self.pop_context_unchecked(cx);
-                    }
                     self.push_context(cx, ContextKind::Else, expr.id, expr.span);
                     return;
                 }
