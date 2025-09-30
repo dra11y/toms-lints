@@ -1,3 +1,4 @@
+#![allow(unused)]
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
 
@@ -15,7 +16,7 @@ use config::{Config, HELP_MESSAGE};
 use context::{Context, ContextKind, NestingLint, Reason};
 use debug::debug_expr_kind;
 use dylint_linting::config_or_default;
-use rustc_ast::{Arm, AssocItem, Expr, ExprKind, Item, ItemKind, ModKind, NodeId};
+use rustc_ast::{Arm, AssocItem, Crate, Expr, ExprKind, Item, ItemKind, ModKind, NodeId};
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::Span;
 use std::collections::HashSet;
@@ -104,25 +105,28 @@ impl NestingDepth {
         self.contexts
             .iter()
             .skip(1)
-            .filter(|c| c.count_depth())
+            .filter(|c| {
+                !matches!(
+                    c.kind,
+                    ContextKind::If | ContextKind::Else | ContextKind::ElseIf
+                )
+            })
             .count()
     }
 
     fn push_context(&mut self, cx: &EarlyContext<'_>, kind: ContextKind, id: NodeId, span: Span) {
-        let source_map = cx.sess().source_map();
         let ctx = Context::new(kind.clone(), id, span);
         self.contexts.push(ctx);
+        self.debug_visit(cx, &format!("PUSH CONTEXT: {id} {kind}"), span);
+
         let depth = self.depth();
-
-        self.debug_visit(cx, &format!("PUSH CONTEXT: {kind}"), span);
-
         if depth <= self.config.max_depth {
             return;
         }
 
         let outer_span = self.contexts.get(1).map(|ctx| ctx.span);
 
-        let mut lint = self.current_nesting_lint.get_or_insert(NestingLint {
+        let lint = self.current_nesting_lint.get_or_insert(NestingLint {
             outer_span,
             span,
             kind,
@@ -157,10 +161,9 @@ impl NestingDepth {
         kind: &ContextKind,
         id: &NodeId,
     ) -> Result<(), anyhow::Error> {
-        let depth = self.depth();
         let mut ctx = self.pop_context_unchecked(cx);
 
-        if !matches!(&ctx.kind, kind) {
+        if ctx.kind != *kind {
             bail!(
                 "pop context kind mismatch: expected {kind}, got {}",
                 ctx.kind
@@ -209,7 +212,7 @@ impl NestingDepth {
 
 impl EarlyLintPass for NestingDepth {
     #[inline(always)]
-    fn check_crate_post(&mut self, cx: &EarlyContext<'_>, a: &rustc_ast::Crate) {
+    fn check_crate_post(&mut self, cx: &EarlyContext<'_>, _krate: &Crate) {
         for lint in &self.lints {
             cx.span_lint(NESTING_DEPTH, lint.span, |diag| {
                 if let Some(outer_span) = lint.outer_span {
@@ -225,24 +228,6 @@ impl EarlyLintPass for NestingDepth {
     fn check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) {
         if !self.should_check_item(cx, item) {
             return;
-        }
-
-        match &item.kind {
-            ItemKind::Static(item) => {
-                let Some(expr) = &item.expr else {
-                    return;
-                };
-            }
-            ItemKind::Fn(func) => {
-                if let Some(body) = &func.body {
-
-                    // self.push_context(cx, ContextKind::Func, , span);
-                }
-            }
-            ItemKind::Mod(_, ident, ModKind::Loaded(items, inline, spans)) => todo!(),
-            ItemKind::Trait(_) => todo!(),
-            ItemKind::Impl(_) => todo!(),
-            _ => return,
         }
 
         self.push_context(cx, ContextKind::Item, item.id, item.span);
@@ -282,7 +267,7 @@ impl EarlyLintPass for NestingDepth {
                     ContextKind::Then
                 };
                 self.push_context(cx, ContextKind::If, expr.id, expr.span);
-                self.push_context(cx, kind, if_or_else_if_block.id, if_or_else_if_block.span);
+                self.push_context(cx, kind, if_or_else_if_block.id, expr.span);
                 self.debug_visit(
                     cx,
                     &format!("ENTER IF: {} {}", expr.id, if_or_else_if_block.id),
@@ -333,6 +318,11 @@ impl EarlyLintPass for NestingDepth {
                 );
                 self.push_context(cx, ContextKind::ExprBlock, expr.id, expr.span);
             }
+            ExprKind::Match(..) => {
+                self.debug_visit(cx, &format!("ENTER MATCH: {}", expr.id), expr.span);
+                self.push_context(cx, ContextKind::Match, expr.id, expr.span);
+            }
+
             _ => {}
         }
     }
@@ -351,17 +341,6 @@ impl EarlyLintPass for NestingDepth {
                     &format!("EXIT IF: {} {}", expr.id, if_block.id),
                     expr.span,
                 );
-                if let Some(else_expr) = else_expr {
-                    self.debug_visit(
-                        cx,
-                        &format!(
-                            "  with ELSE: {} {}",
-                            else_expr.id,
-                            debug_expr_kind(&else_expr.kind)
-                        ),
-                        expr.span,
-                    );
-                }
                 while matches!(
                     self.contexts.last().map(|c| c.kind),
                     Some(
@@ -372,11 +351,6 @@ impl EarlyLintPass for NestingDepth {
                     )
                 ) {
                     let ctx = self.pop_context_unchecked(cx);
-                    self.debug_visit(
-                        cx,
-                        &format!("POP CONTEXT: {} {}", ctx.id, ctx.kind),
-                        ctx.span,
-                    );
                     if ctx.id == expr.id {
                         break;
                     }
@@ -401,6 +375,11 @@ impl EarlyLintPass for NestingDepth {
                 );
                 self.pop_context(cx, &ContextKind::ExprBlock, &expr.id)
                     .expect("pop expr block context");
+            }
+            ExprKind::Match(..) => {
+                self.debug_visit(cx, &format!("EXIT MATCH: {}", expr.id), expr.span);
+                self.pop_context(cx, &ContextKind::Match, &expr.id)
+                    .expect("pop match context");
             }
             _ => {}
         }

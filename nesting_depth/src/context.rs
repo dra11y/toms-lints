@@ -11,7 +11,7 @@ pub enum ContextKind {
     Then,
     ElseIf,
     Else,
-    MatchArm,
+    Match,
     Block,
     ExprBlock,
     While,
@@ -44,10 +44,6 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn count_depth(&self) -> bool {
-        self.kind.count_depth()
-    }
-
     pub fn new(kind: ContextKind, id: NodeId, span: Span) -> Self {
         Self {
             span,
@@ -61,23 +57,6 @@ impl Context {
 }
 
 impl ContextKind {
-    pub fn count_depth(&self) -> bool {
-        match self {
-            ContextKind::Item => true,
-            ContextKind::Func => true,
-            ContextKind::If => false,
-            ContextKind::Then => true,
-            ContextKind::Else => true,
-            ContextKind::ElseIf => true,
-            ContextKind::MatchArm => true,
-            ContextKind::Block => true,
-            ContextKind::ExprBlock => true,
-            ContextKind::While => true,
-            ContextKind::For => true,
-            ContextKind::Loop => true,
-        }
-    }
-
     pub fn descr(&self) -> &'static str {
         match self {
             ContextKind::Item => "item",
@@ -86,7 +65,7 @@ impl ContextKind {
             ContextKind::Then => "then",
             ContextKind::Else => "else",
             ContextKind::ElseIf => "else-if",
-            ContextKind::MatchArm => "match-arm",
+            ContextKind::Match => "match",
             ContextKind::Block => "block",
             ContextKind::ExprBlock => "expr-block",
             ContextKind::While => "while",

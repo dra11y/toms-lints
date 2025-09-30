@@ -8,14 +8,14 @@ use serde::Deserialize;
 use crate::NestingDepth;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
-pub struct SpanInfo {
+pub struct SpanRange {
     file: String,
     start_line: usize,
     end_line: usize,
 }
 
-impl SpanInfo {
-    pub fn intersects(&self, other: &SpanInfo) -> bool {
+impl SpanRange {
+    pub fn intersects(&self, other: &SpanRange) -> bool {
         if self.file != other.file {
             return false;
         }
@@ -58,7 +58,7 @@ impl NestingDepth {
         }
         if self
             .config
-            .debug_span_info
+            .debug_span_range
             .as_ref()
             .is_some_and(|s| !s.intersects(&self.debug_span_info(cx, span)))
         {
@@ -80,7 +80,7 @@ impl NestingDepth {
         println!("{debug_str}");
     }
 
-    pub fn debug_span_info(&self, cx: &EarlyContext<'_>, span: Span) -> SpanInfo {
+    pub fn debug_span_info(&self, cx: &EarlyContext<'_>, span: Span) -> SpanRange {
         debug_span_info(span, cx.sess().source_map())
     }
 
@@ -103,7 +103,7 @@ impl NestingDepth {
     }
 }
 
-pub fn debug_span_info(span: Span, source_map: &SourceMap) -> SpanInfo {
+pub fn debug_span_info(span: Span, source_map: &SourceMap) -> SpanRange {
     let location_start = source_map.span_to_location_info(span);
     let location_end = source_map.span_to_location_info(span.shrink_to_hi());
     let file = location_start
@@ -115,7 +115,7 @@ pub fn debug_span_info(span: Span, source_map: &SourceMap) -> SpanInfo {
                 .to_string()
         })
         .unwrap_or_default();
-    SpanInfo {
+    SpanRange {
         file,
         start_line: location_start.1,
         end_line: location_end.1,

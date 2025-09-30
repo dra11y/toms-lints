@@ -4,10 +4,13 @@ use std::sync::LazyLock;
 static LAZY_VALUE: LazyLock<i32> = LazyLock::new(|| {
     if let Some(config) = Some(42) {
         if config > 0 {
+            // ctxs if: 41, else: 69
             if let Ok(validated) = Ok::<i32, &str>(config) {
                 //~v ERROR: 4 levels
                 if validated == 42 { 42 } else { 0 }
+            // ctxs if: 70, else-if: 87
             } else if config < 1 {
+                //~v ERROR: 4 levels
                 {
                     let x = 1;
                     x + 1
@@ -83,9 +86,9 @@ fn four() {
         _ => {
             if tag_id > 5 {
                 let _ = String::new();
+                //~v ERROR: 5 levels
                 if tag_id < 15 {
                     let _ = String::new();
-                    //~v ERROR: 4 levels
                     if tag_id % 2 == 0 {
                         let _ = String::new();
                     }
@@ -148,6 +151,7 @@ fn seven() {
             println!("y < 1");
             if y < 2 {
                 println!("y < 2");
+                //~v ERROR: 6 levels
                 if y < 5 {
                     println!("y < 5");
                     if y < 10 {
