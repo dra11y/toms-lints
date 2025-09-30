@@ -250,7 +250,6 @@ fn main() {
 
 // --- Edge case functions for additional lint coverage ---
 
-#[allow(unused)]
 fn edge_let_else_reduction() {
     let some_val = Some(10);
     let Some(a) = some_val else {
@@ -265,14 +264,14 @@ fn edge_let_else_reduction() {
             if b < 20 {
                 //~v ERROR: 4 levels
                 if b != 13 {
-                    let _ = b; // silence copy drop
+                    // silence copy drop
+                    let _ = b;
                 }
             }
         }
     }
 }
 
-#[allow(unused)]
 fn edge_deep_only_in_final_else(x: i32) {
     if x < 0 {
         if x < -5 {
@@ -296,7 +295,6 @@ fn edge_deep_only_in_final_else(x: i32) {
     }
 }
 
-#[allow(unused)]
 fn edge_mixed_match_loop_closure(flag: bool, code: u32) {
     let mut i = 0;
     while i < 2 {
@@ -327,7 +325,6 @@ fn edge_mixed_match_loop_closure(flag: bool, code: u32) {
     }
 }
 
-#[allow(unused)]
 fn edge_sequential_independent_ifs(n: i32) {
     if n > 0 {
         let _ = n;
@@ -346,7 +343,6 @@ fn edge_sequential_independent_ifs(n: i32) {
     }
 }
 
-#[allow(unused)]
 fn edge_nested_matches(v: i32) {
     match v {
         0 => match v + 1 {
@@ -383,13 +379,11 @@ macro_rules! make_nested_if {
     };
 }
 
-#[allow(unused)]
 fn edge_macro_local(v: i32) {
     //~v ERROR: 5 levels
     make_nested_if!(v);
 }
 
-#[allow(unused)]
 fn edge_multiple_closures_layers(x: i32) {
     let outer = || {
         let mid = || {
@@ -412,7 +406,6 @@ fn edge_multiple_closures_layers(x: i32) {
     outer();
 }
 
-#[allow(unused)]
 fn edge_partial_deep_path(cond: bool) {
     if cond {
         if cond {
