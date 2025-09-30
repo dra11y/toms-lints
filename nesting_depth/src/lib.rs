@@ -416,7 +416,10 @@ impl NestingDepth {
 
         self.debug_visit_extra(
             cx,
-            &format!("EXIT IF FOR ELSE: {last_if_branch_kind}"),
+            &format!(
+                "EXIT {last_if_branch_kind} {}",
+                self.debug_span(cx, if_expr_span)
+            ),
             last_span,
             &last_context_id.to_string(),
         );
@@ -570,7 +573,7 @@ impl EarlyLintPass for NestingDepth {
                     return;
                 }
 
-                self.debug_visit(cx, "ENTER block", block.span);
+                self.debug_visit(cx, "EXIT block", block.span);
                 self.pop_context(cx, &ContextKind::Block, &block.id);
             }
             _ => {}
