@@ -407,9 +407,9 @@ impl EarlyLintPass for NestingDepth {
                     }
                 }
             }
-            // EXIT the `else` block context
             ExprKind::Block(block, _) => {
                 if self.else_block_expr_ids.contains(&expr.id) {
+                    // EXIT the `else` block context
                     self.debug_visit(
                         cx,
                         &format!("EXIT ELSE: {} {}", expr.id, block.id),
