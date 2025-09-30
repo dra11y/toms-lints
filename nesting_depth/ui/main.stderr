@@ -175,5 +175,146 @@ error: consecutive if-else statements: 10 max allowed, 22 found
     |
     = help: use early returns and guard clauses to reduce nesting
 
-error: aborting due to 9 previous errors
+error: nesting depth: 3 max allowed, 4 levels found
+   --> ui/main.rs:267:17
+    |
+263 | /      if b > 5 {
+264 | |          if b % 2 == 0 {
+265 | |              if b < 20 {
+266 | |
+267 | |/                 if b != 13 {
+268 | ||                     let _ = b; // silence copy drop
+269 | ||                 }
+    | ||_________________^
+...   |
+272 | |      }
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 to 5 levels found
+   --> ui/main.rs:289:17
+    |
+277 | /      if x < 0 {
+278 | |          if x < -5 {
+279 | |              let _ = x;
+...   |
+289 | |/                 if x > 3 {
+290 | ||                     if x > 4 {
+291 | ||                         let _ = x;
+292 | ||                     }
+293 | ||                 }
+    | ||_________________^
+...   |
+296 | |      }
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 to 7 levels found
+   --> ui/main.rs:307:21
+    |
+303 | /          match code {
+304 | |              0 => {
+305 | |                  let f = || {
+306 | |
+307 | |/                     if flag {
+308 | ||                         if code == 0 {
+309 | ||                             if i == 0 {
+310 | ||                                 if i < 10 {
+...   ||
+315 | ||                     }
+    | ||_____________________^
+...   |
+324 | |              _ => {}
+325 | |          }
+    | |__________- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 to 6 levels found
+   --> ui/main.rs:355:22
+    |
+351 | /      match v {
+352 | |          0 => match v + 1 {
+353 | |              1 => match v + 2 {
+354 | |
+355 | |                  2 => {
+    | | ______________________^
+356 | ||                     if v == 0 {
+357 | ||                         if v + 3 == 3 {
+358 | ||                             let _ = v;
+...   ||
+361 | ||                 }
+    | ||_________________^
+...   |
+366 | |          _ => {}
+367 | |      }
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 to 5 levels found
+   --> ui/main.rs:375:21
+    |
+372 | /          if $val > 0 {
+373 | |              if $val > 1 {
+374 | |                  if $val > 2 {
+375 | |/                     if $val > 3 {
+376 | ||                         if $val > 4 {
+377 | ||                             let _ = $val;
+378 | ||                         }
+379 | ||                     }
+    | ||_____________________^
+...   |
+382 | |          }
+    | |__________- outer nested context
+...
+389 |        make_nested_if!(v);
+    |        ------------------ in this macro invocation
+    |
+    = help: use early returns and guard clauses to reduce nesting
+    = note: this error originates in the macro `make_nested_if` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: nesting depth: 3 max allowed, 4 to 7 levels found
+   --> ui/main.rs:398:17
+    |
+394 |        let outer = || {
+    |  _____________________-
+395 | |          let mid = || {
+396 | |              let inner = || {
+397 | |
+398 | |/                 if x > 0 {
+399 | ||                     if x > 1 {
+400 | ||                         if x > 2 {
+401 | ||                             if x > 3 {
+...   ||
+406 | ||                 }
+    | ||_________________^
+...   |
+410 | |          mid();
+411 | |      };
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: nesting depth: 3 max allowed, 4 levels found
+   --> ui/main.rs:421:17
+    |
+417 | /      if cond {
+418 | |          if cond {
+419 | |              if cond {
+420 | |
+421 | |/                 if cond {
+422 | ||                     let _ = cond;
+423 | ||                 }
+    | ||_________________^
+...   |
+428 | |          let _ = cond;
+429 | |      }
+    | |______- outer nested context
+    |
+    = help: use early returns and guard clauses to reduce nesting
+
+error: aborting due to 16 previous errors
 

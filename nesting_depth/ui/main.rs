@@ -372,7 +372,6 @@ macro_rules! make_nested_if {
         if $val > 0 {
             if $val > 1 {
                 if $val > 2 {
-                    //~v ERROR: 5 levels
                     if $val > 3 {
                         if $val > 4 {
                             let _ = $val;
@@ -386,6 +385,7 @@ macro_rules! make_nested_if {
 
 #[allow(unused)]
 fn edge_macro_local(v: i32) {
+    //~v ERROR: 5 levels
     make_nested_if!(v);
 }
 
