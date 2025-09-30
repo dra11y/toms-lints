@@ -1156,6 +1156,7 @@ dependencies = [
 name = "nesting_depth"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "dylint_linting",
  "dylint_uitesting",
  "env_logger",

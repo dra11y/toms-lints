@@ -7,13 +7,17 @@ mod debug;
 extern crate rustc_ast;
 extern crate rustc_span;
 
-use std::{cmp::Ordering, collections::HashSet};
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+};
 
+use anyhow::{Context as _, bail};
 use debug::{SpanInfo, debug_expr_kind, debug_span};
 use dylint_linting::config_or_default;
 use rustc_ast::{
     Arm, AssocItem, AssocItemKind, Block, Crate, Expr, ExprKind, HasNodeId, Item, ItemKind,
-    LocalKind, ModKind, NodeId, Stmt, StmtKind,
+    LocalKind, ModKind, NodeId, StaticItem, Stmt, StmtKind,
     visit::{FnKind, Visitor},
 };
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
@@ -67,6 +71,10 @@ pub struct NestingDepth {
     config: Config,
     contexts: Vec<Context>,
     lints: Vec<Lint>,
+    skipped_macro_ids: HashSet<NodeId>,
+    checked_ids: HashSet<NodeId>,
+    /// Map of block id to (IfBranchKind, outer if expr span)
+    if_else_blocks: HashMap<NodeId, (IfBranchKind, Span)>,
     current_nesting_lint: Option<Lint>,
     inside_fn: bool,
 }
@@ -77,6 +85,9 @@ impl Default for NestingDepth {
             config: config_or_default(env!("CARGO_PKG_NAME")),
             contexts: vec![],
             lints: vec![],
+            skipped_macro_ids: HashSet::new(),
+            checked_ids: HashSet::new(),
+            if_else_blocks: HashMap::new(),
             current_nesting_lint: None,
             inside_fn: false,
         }
@@ -85,7 +96,7 @@ impl Default for NestingDepth {
 
 const DESCRIPTION: &str = "excessive nesting";
 
-dylint_linting::impl_pre_expansion_lint! {
+dylint_linting::impl_early_lint! {
     /// ### What it does
     /// Checks for nested if-then-else statements and other branching that is too many levels deep.
     ///
@@ -135,41 +146,62 @@ dylint_linting::impl_pre_expansion_lint! {
     NestingDepth::default()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum IfElseState {
-    None,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum IfBranchKind {
     If,
+    ElseIf,
     Else,
 }
 
-#[derive(Debug, Clone)]
+impl IfBranchKind {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            IfBranchKind::If => "if",
+            IfBranchKind::ElseIf => "else if",
+            IfBranchKind::Else => "else",
+        }
+    }
+}
+
+impl std::fmt::Display for IfBranchKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum ContextKind {
-    Item(ItemKind),
-    Expr(ExprKind),
-    If,
-    Else,
-    Match,
+    Item,
+    Func,
+    If(IfBranchKind, Span),
+    MatchArm,
     Block,
-    BlockExpr(Box<Block>),
     While,
     For,
     Loop,
 }
 
+impl std::fmt::Display for ContextKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.descr())
+    }
+}
+
 impl ContextKind {
     fn count_depth(&self) -> bool {
-        !matches!(self, ContextKind::Match | ContextKind::Item(..))
+        // / !matches!(self, ContextKind::Match | ContextKind::Item(..))
+        true
     }
 
     fn descr(&self) -> &'static str {
         match self {
-            ContextKind::Item(kind) => kind.descr(),
-            ContextKind::Expr(kind) => debug_expr_kind(kind),
-            ContextKind::If => "if",
-            ContextKind::Else => "else",
-            ContextKind::Match => "match",
+            ContextKind::Item => "item",
+            ContextKind::Func => "func",
+            ContextKind::If(IfBranchKind::If, _) => "if",
+            ContextKind::If(IfBranchKind::Else, _) => "else",
+            ContextKind::If(IfBranchKind::ElseIf, _) => "else-if",
+            ContextKind::MatchArm => "match-arm",
             ContextKind::Block => "block",
-            ContextKind::BlockExpr(block) => "block expr",
             ContextKind::While => "while",
             ContextKind::For => "for",
             ContextKind::Loop => "loop",
@@ -177,17 +209,11 @@ impl ContextKind {
     }
 }
 
-impl PartialEq for ContextKind {
-    fn eq(&self, other: &Self) -> bool {
-        matches!(self, other)
-    }
-}
-
 #[derive(Clone)]
 struct Context {
     span: Span,
+    id: NodeId,
     kind: ContextKind,
-    if_else_state: IfElseState,
     consec_if_else_span: Option<Span>,
     consec_if_else_count: usize,
     consec_if_else_lint: Option<Lint>,
@@ -200,11 +226,11 @@ impl Context {
 }
 
 impl Context {
-    fn new(kind: ContextKind, span: Span) -> Self {
+    fn new(kind: ContextKind, id: NodeId, span: Span) -> Self {
         Self {
             span,
             kind,
-            if_else_state: IfElseState::None,
+            id,
             consec_if_else_span: None,
             consec_if_else_count: 0,
             consec_if_else_lint: None,
@@ -275,9 +301,9 @@ impl NestingDepth {
             .count()
     }
 
-    fn push_context(&mut self, cx: &EarlyContext<'_>, kind: ContextKind, span: Span) {
+    fn push_context(&mut self, cx: &EarlyContext<'_>, kind: ContextKind, id: NodeId, span: Span) {
         let source_map = cx.sess().source_map();
-        let ctx = Context::new(kind.clone(), span);
+        let ctx = Context::new(kind.clone(), id, span);
         self.contexts.push(ctx);
         let depth = self.depth();
 
@@ -287,7 +313,6 @@ impl NestingDepth {
             kind.descr(),
             debug_span(span, source_map)
         );
-        println!("push {debug_str}");
 
         if depth <= self.config.max_depth {
             return;
@@ -304,120 +329,142 @@ impl NestingDepth {
         lint.reason = Reason::Depth(depth);
     }
 
-    fn replace_context_kind(&mut self, cx: &EarlyContext<'_>, kind: ContextKind) {
-        if let Some(mut ctx) = self.contexts.last_mut() {
-            println!("REPLACE KIND: {} -> {}", ctx.kind.descr(), kind.descr());
-            *ctx = Context {
-                kind,
-                ..ctx.clone()
-            }
-        }
-    }
-
-    fn pop_context(&mut self, cx: &EarlyContext<'_>, kind: &ContextKind) {
-        let depth = self.depth();
-        let Some(mut ctx) = self.contexts.pop() else {
-            return;
-        };
-
-        // // Just pop Block because check_block_post doesn't exist.
-        // let mut ctx = if matches!(ctx.kind, ContextKind::Block) {
-        //     let Some(ctx) = self.contexts.pop() else {
-        //         return;
-        //     };
-        //     ctx
-        // } else {
-        //     ctx
-        // };
-
-        if !matches!(&ctx.kind, kind) {
-            eprintln!(
-                "MISMATCH ITEM CONTEXT: item kind {} vs context kind {}",
-                ctx.kind.descr(),
-                kind.descr()
-            );
-        }
-
+    fn push_current_lints(&mut self, cx: &EarlyContext<'_>, ctx: &mut Context) {
         if let Some(lint) = self.current_nesting_lint.take() {
-            self.debug_visit(cx, "pop_context add nesting lint", ctx.span);
             self.lints.push(lint);
         }
 
         if let Some(lint) = ctx.consec_if_else_lint.take() {
-            self.debug_visit(cx, "pop_context add if/else lint", ctx.span);
             self.lints.push(lint);
         }
     }
-}
 
-fn should_check_item(item: &Item) -> bool {
-    matches!(
-        item.kind,
-        // ItemKind::Static(_) |
-        ItemKind::Fn(..)
-            | ItemKind::Mod(_, _, ModKind::Loaded(..))
-            | ItemKind::Trait(..)
-            | ItemKind::Impl(..)
-    )
-}
+    fn pop_context(
+        &mut self,
+        cx: &EarlyContext<'_>,
+        kind: &ContextKind,
+        id: &NodeId,
+    ) -> Result<(), anyhow::Error> {
+        let depth = self.depth();
+        let mut ctx = self.contexts.pop().context("No context exists")?;
 
-fn expr_context_kind(expr: &Expr, post: bool, last_ctx: Option<&Context>) -> Option<ContextKind> {
-    let last_is_if = last_ctx.is_some_and(|c| matches!(c.kind, ContextKind::If));
-    match &expr.kind {
-        ExprKind::If(expr, block, expr1) => Some(ContextKind::If),
-        ExprKind::Match(expr, arms, match_kind) => Some(ContextKind::Match),
-        ExprKind::Block(..) if last_is_if => Some(ContextKind::Else),
-        ExprKind::Block(body, _) => Some(ContextKind::BlockExpr(body.clone())),
-        ExprKind::While(_, body, _) => Some(ContextKind::While),
-        ExprKind::ForLoop { body, .. } => Some(ContextKind::For),
-        ExprKind::Loop(body, _, _) => Some(ContextKind::Loop),
-        ExprKind::Gen(_, body, _, _) | ExprKind::TryBlock(body) => {
-            Some(ContextKind::BlockExpr(body.clone()))
+        if ctx.id != *id {
+            bail!("pop context id mismatch: expected {id}, got {}", ctx.id);
         }
-        ExprKind::Array(..) => None,
-        ExprKind::ConstBlock(..) => None,
-        ExprKind::Call(..) => None,
-        ExprKind::MethodCall(..) => None,
-        ExprKind::Tup(..) => None,
-        ExprKind::Binary(..) => None,
-        ExprKind::Unary(..) => None,
-        ExprKind::Lit(..) => None,
-        ExprKind::Cast(..) => None,
-        ExprKind::Type(..) => None,
-        ExprKind::Let(..) => None,
-        ExprKind::Closure(..) => None,
-        ExprKind::Await(..) => None,
-        ExprKind::Use(..) => None,
-        ExprKind::Assign(..) => None,
-        ExprKind::AssignOp(..) => None,
-        ExprKind::Field(..) => None,
-        ExprKind::Index(..) => None,
-        ExprKind::Range(..) => None,
-        ExprKind::Underscore => None,
-        ExprKind::Path(..) => None,
-        ExprKind::AddrOf(..) => None,
-        ExprKind::Break(..) => None,
-        ExprKind::Continue(..) => None,
-        ExprKind::Ret(..) => None,
-        ExprKind::InlineAsm(..) => None,
-        ExprKind::OffsetOf(..) => None,
-        ExprKind::MacCall(..) => None,
-        ExprKind::Struct(..) => None,
-        ExprKind::Repeat(..) => None,
-        ExprKind::Paren(..) => None,
-        ExprKind::Try(..) => None,
-        ExprKind::Yield(..) => None,
-        ExprKind::Yeet(..) => None,
-        ExprKind::Become(..) => None,
-        ExprKind::IncludedBytes(..) => None,
-        ExprKind::FormatArgs(..) => None,
-        ExprKind::UnsafeBinderCast(..) => None,
-        ExprKind::Err(..) => None,
-        ExprKind::Dummy => None,
+
+        if ctx.kind != *kind {
+            bail!(
+                "pop context kind mismatch: expected {kind}, got {}",
+                ctx.kind
+            );
+        }
+
+        self.push_current_lints(cx, &mut ctx);
+
+        Ok(())
+    }
+
+    fn enter_if_expr(
+        &mut self,
+        cx: &EarlyContext<'_>,
+        expr: &Expr,
+        if_or_else_if_block: &Block,
+        else_expr: Option<&Expr>,
+    ) {
+        {
+            // mark `if` block, iff not already marked as `else if`.
+            let (kind, _) = *self
+                .if_else_blocks
+                .entry(if_or_else_if_block.id)
+                .or_insert((IfBranchKind::If, expr.span));
+            self.push_context(
+                cx,
+                ContextKind::If(kind, expr.span),
+                if_or_else_if_block.id,
+                if_or_else_if_block.span,
+            );
+            self.debug_visit_extra(
+                cx,
+                &format!("ENTER {kind} {}", self.debug_span(cx, expr.span)),
+                if_or_else_if_block.span,
+                &if_or_else_if_block.id.to_string(),
+            );
+        }
+
+        if let Some(else_expr) = else_expr {
+            let (id, kind) = match &else_expr.kind {
+                ExprKind::If(_expr, else_if_block, _) => (else_if_block.id, IfBranchKind::ElseIf),
+                ExprKind::Block(else_block, _) => (else_block.id, IfBranchKind::Else),
+                _ => unreachable!("else expr must be ExprKind::If or ExprKind::Block"),
+            };
+            self.if_else_blocks.insert(id, (kind, expr.span));
+        }
+    }
+
+    fn did_enter_if_block(&mut self, cx: &EarlyContext<'_>, expr: &Expr, block: &Block) -> bool {
+        let Some((last_context_id, ContextKind::If(last_if_branch_kind, if_expr_span), last_span)) =
+            self.contexts.last().map(|c| (c.id, c.kind, c.span))
+        else {
+            return false;
+        };
+
+        let Some((if_branch_kind, span)) = self.if_else_blocks.get(&block.id).copied() else {
+            return false;
+        };
+
+        self.if_else_blocks.remove(&last_context_id);
+
+        self.debug_visit_extra(
+            cx,
+            &format!("EXIT IF FOR ELSE: {last_if_branch_kind}"),
+            last_span,
+            &last_context_id.to_string(),
+        );
+        self.pop_context(
+            cx,
+            &ContextKind::If(last_if_branch_kind, if_expr_span),
+            &last_context_id,
+        );
+        self.push_context(
+            cx,
+            ContextKind::If(if_branch_kind, if_expr_span),
+            block.id,
+            expr.span,
+        );
+        self.debug_visit_extra(
+            cx,
+            &format!("ENTER BLOCK {if_branch_kind}"),
+            block.span,
+            &block.id.to_string(),
+        );
+
+        true
+    }
+
+    fn should_check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) -> bool {
+        matches!(
+            item.kind,
+            // ItemKind::Static(_) |
+            ItemKind::Fn(..)
+                | ItemKind::Mod(_, _, ModKind::Loaded(..))
+                | ItemKind::Trait(..)
+                | ItemKind::Impl(..)
+        ) && self.should_check_id(cx, item.id, item.span)
+    }
+
+    /// Returns `true` if the node is not from a macro expansion and can be checked
+    fn should_check_id(&mut self, cx: &EarlyContext<'_>, id: NodeId, span: Span) -> bool {
+        if self.skipped_macro_ids.contains(&id) {
+            return false;
+        }
+        if span.ctxt().in_external_macro(cx.sess().source_map()) {
+            self.skipped_macro_ids.insert(id);
+            return false;
+        }
+        self.checked_ids.insert(id);
+        true
     }
 }
-
-// _ => should_check_expr(expr).then(|| ContextKind::Expr(expr.kind.clone())),
 
 impl EarlyLintPass for NestingDepth {
     #[inline(always)]
@@ -435,22 +482,40 @@ impl EarlyLintPass for NestingDepth {
 
     #[inline(always)]
     fn check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) {
-        if !should_check_item(item) {
+        if !self.should_check_item(cx, item) {
             return;
         }
 
-        self.push_context(cx, ContextKind::Item(item.kind.clone()), item.span);
-        self.debug_visit_extra(cx, "check_item", item.span, item.kind.descr());
+        match &item.kind {
+            ItemKind::Static(item) => {
+                let Some(expr) = &item.expr else {
+                    return;
+                };
+            }
+            ItemKind::Fn(func) => {
+                if let Some(body) = &func.body {
+
+                    // self.push_context(cx, ContextKind::Func, , span);
+                }
+            }
+            ItemKind::Mod(_, ident, ModKind::Loaded(items, inline, spans)) => todo!(),
+            ItemKind::Trait(_) => todo!(),
+            ItemKind::Impl(_) => todo!(),
+            _ => return,
+        }
+
+        self.push_context(cx, ContextKind::Item, item.id, item.span);
+        self.debug_visit_extra(cx, "ENTER item", item.span, item.kind.descr());
     }
 
     #[inline(always)]
     fn check_item_post(&mut self, cx: &EarlyContext<'_>, item: &Item) {
-        if !should_check_item(item) {
+        if !self.checked_ids.contains(&item.id) {
             return;
         }
 
-        self.debug_visit_extra(cx, "check_item_post", item.span, item.kind.descr());
-        self.pop_context(cx, &ContextKind::Item(item.kind.clone()));
+        self.debug_visit_extra(cx, "EXIT item", item.span, item.kind.descr());
+        self.pop_context(cx, &ContextKind::Item, &item.id);
     }
 
     #[inline(always)]
@@ -458,67 +523,68 @@ impl EarlyLintPass for NestingDepth {
         // println!("CHECK ARM");
     }
 
-    // #[inline(always)]
-    // fn check_block(&mut self, cx: &EarlyContext<'_>, b: &rustc_ast::Block) {
-    //     if self
-    //         .contexts
-    //         .last()
-    //         .is_none_or(|c| !matches!(c.kind, ContextKind::If | ContextKind::Else))
-    //     {
-    //         self.push_context(cx, ContextKind::Block, b.span);
-    //     }
-    //     self.debug_visit(cx, "check_block", b.span);
-    // }
-
     #[inline(always)]
     fn check_expr(&mut self, cx: &EarlyContext<'_>, expr: &Expr) {
-        self.debug_visit_extra(
-            cx,
-            "check_expr start",
-            expr.span,
-            debug_expr_kind(&expr.kind),
-        );
-
-        if let ExprKind::If(_cond, _block, _else_expr) = &expr.kind {
-            if let Some(ctx) = self.contexts.last_mut() {
-                ctx.if_else_state = IfElseState::If;
-            }
-        };
-
-        let Some(kind) = expr_context_kind(expr, false, self.contexts.last()) else {
+        if !self.should_check_id(cx, expr.id, expr.span) {
             return;
-        };
+        }
 
-        // let descr = kind.descr();
-        // if matches!(kind, ContextKind::Else) {
-        //     self.contexts.pop();
-        //     self.replace_context_kind(cx, ContextKind::Else);
-        // } else {
-        //     self.push_context(cx, kind, expr.span);
-        // }
-
-        // self.debug_visit_extra(cx, "check_expr", expr.span, descr);
+        match &expr.kind {
+            // enter the `if` or `else-if` block context
+            ExprKind::If(_cond, if_or_else_if_block, else_expr) => {
+                self.enter_if_expr(cx, expr, if_or_else_if_block, else_expr.as_deref());
+            }
+            // enter the `else` block context
+            ExprKind::Block(block, _) => {
+                if self.did_enter_if_block(cx, expr, block) {
+                    return;
+                }
+                self.push_context(cx, ContextKind::Block, block.id, block.span);
+                self.debug_visit(cx, "ENTER block", block.span);
+            }
+            _ => {}
+        }
     }
 
     #[inline(always)]
     fn check_expr_post(&mut self, cx: &EarlyContext<'_>, expr: &Expr) {
-        let Some(kind) = expr_context_kind(expr, true, self.contexts.last()) else {
+        if !self.checked_ids.contains(&expr.id) {
             return;
-        };
+        }
 
-        let descr = kind.descr();
-        self.debug_visit_extra(cx, "check_expr_post", expr.span, descr);
-        self.pop_context(cx, &kind);
+        match &expr.kind {
+            // EXIT the `if` or `else-if` block context
+            ExprKind::If(_cond, if_block, else_expr) => {
+                // TODO: exit the if only if needed
+            }
+            // EXIT the `else` block context
+            ExprKind::Block(block, _) => {
+                if let Some((if_branch_kind, span)) = self.if_else_blocks.remove(&block.id) {
+                    self.debug_visit_extra(
+                        cx,
+                        &format!("EXIT {if_branch_kind}"),
+                        block.span,
+                        &block.id.to_string(),
+                    );
+                    self.pop_context(cx, &ContextKind::If(if_branch_kind, block.span), &block.id);
+                    return;
+                }
+
+                self.debug_visit(cx, "ENTER block", block.span);
+                self.pop_context(cx, &ContextKind::Block, &block.id);
+            }
+            _ => {}
+        }
     }
 
     #[inline(always)]
     fn check_trait_item(&mut self, cx: &EarlyContext<'_>, _: &AssocItem) {
-        println!("CHECK TRAIT ITEM");
+        // println!("CHECK TRAIT ITEM");
     }
 
     #[inline(always)]
     fn check_trait_item_post(&mut self, cx: &EarlyContext<'_>, _: &AssocItem) {
-        println!("CHECK TRAIT ITEM POST");
+        // println!("CHECK TRAIT ITEM POST");
     }
 }
 

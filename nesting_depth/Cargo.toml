@@ -17,6 +17,7 @@ name = "nesting_depth"
 path = "ui/main.rs"
 
 [dependencies]
+anyhow.workspace = true
 dylint_linting.workspace = true
 env_logger.workspace = true
 log.workspace = true
