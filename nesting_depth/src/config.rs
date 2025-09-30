@@ -46,6 +46,12 @@ pub struct Config {
     /// Optional span range to limit debug output
     #[serde(default)]
     pub debug_span_range: Option<SpanRange>,
+
+    /// Macro names whose expanded contents should be ignored for nesting depth purposes.
+    /// Example: ["html", "sqlx::query", "serde_json::json"]. Matching is by the final macro
+    /// name identifier seen in the expansion chain (re-export renames will need that name here).
+    #[serde(default)]
+    pub ignore_macros: Vec<String>,
 }
 
 impl Default for Config {
@@ -57,6 +63,7 @@ impl Default for Config {
             max_consec_if_else: DEFAULT_MAX_CONSEC_IF_ELSE,
             debug: DEFAULT_DEBUG,
             debug_span_range: None,
+            ignore_macros: Vec::new(),
         }
     }
 }

@@ -18,7 +18,7 @@ use debug::debug_expr_kind;
 use dylint_linting::config_or_default;
 use rustc_ast::{Arm, AssocItem, Crate, Expr, ExprKind, Item, ItemKind, ModKind, NodeId};
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
-use rustc_span::Span;
+use rustc_span::{ExpnKind, Span};
 use std::collections::HashSet;
 
 /// Lint for detecting nesting that is too deep
@@ -28,6 +28,10 @@ pub struct NestingDepth {
     lints: Vec<NestingLint>,
     skipped_macro_ids: HashSet<NodeId>,
     checked_ids: HashSet<NodeId>,
+    /// Call site spans (macro invocation spans) for ignored macros. Any node whose span
+    /// is fully contained inside one of these will be skipped, even if its span is not
+    /// marked as coming from an expansion (e.g. tokens originating from macro input).
+    ignored_macro_call_sites: Vec<Span>,
     else_if_expr_ids: HashSet<NodeId>,
     else_block_expr_ids: HashSet<NodeId>,
     current_nesting_lint: Option<NestingLint>,
@@ -43,6 +47,7 @@ impl Default for NestingDepth {
             lints: vec![],
             skipped_macro_ids: HashSet::new(),
             checked_ids: HashSet::new(),
+            ignored_macro_call_sites: vec![],
             else_if_expr_ids: HashSet::new(),
             else_block_expr_ids: HashSet::new(),
             closure_ids: HashSet::new(),
@@ -103,6 +108,56 @@ dylint_linting::impl_early_lint! {
 }
 
 impl NestingDepth {
+    /// Returns true if the span (or any of its parent expansions) originates from one of the
+    /// configured ignored macros. Matching is performed against the macro's local expansion
+    /// name (identifier as written at call site after any `use as` rename).
+    fn span_in_ignored_macro(&mut self, span: Span) -> bool {
+        if self.config.ignore_macros.is_empty() {
+            return false;
+        }
+        // Quick path: if span not from expansion, it still might be inside a macro invocation's
+        // call site span (macro input tokens). Check containment first.
+        if self.span_within_ignored_callsite(span) {
+            return true;
+        }
+        if !span.from_expansion() {
+            return false;
+        }
+        // Walk outward via successive call_site spans until we leave expansion chain.
+        let mut cur = span;
+        while cur.from_expansion() {
+            let data = cur.ctxt().outer_expn_data();
+            if let ExpnKind::Macro(_, name) = data.kind {
+                let macro_name = name.as_str();
+                if self.config.ignore_macros.iter().any(|m| m == macro_name) {
+                    // Record call site span (invocation) so that any non-expansion spans inside
+                    // the macro input are also skipped later.
+                    let call_site = data.call_site;
+                    if !self
+                        .ignored_macro_call_sites
+                        .iter()
+                        .any(|s| s.lo() == call_site.lo() && s.hi() == call_site.hi())
+                    {
+                        self.ignored_macro_call_sites.push(call_site);
+                    }
+                    return true;
+                }
+            }
+            let call_site = data.call_site;
+            if call_site == cur || !call_site.from_expansion() {
+                break;
+            }
+            cur = call_site;
+        }
+        false
+    }
+
+    fn span_within_ignored_callsite(&self, span: Span) -> bool {
+        self.ignored_macro_call_sites.iter().any(|site| {
+            // simple containment check on byte positions
+            span.lo() >= site.lo() && span.hi() <= site.hi()
+        })
+    }
     fn depth(&self) -> usize {
         self.contexts
             .iter()
@@ -231,6 +286,16 @@ impl NestingDepth {
             return true;
         }
         if self.skipped_macro_ids.contains(&id) {
+            return false;
+        }
+        // Ignore nodes whose spans originate from an ignored macro expansion.
+        if self.span_in_ignored_macro(span) {
+            self.skipped_macro_ids.insert(id);
+            return false;
+        }
+        // Also skip if span lies within any previously recorded ignored macro call site.
+        if self.span_within_ignored_callsite(span) {
+            self.skipped_macro_ids.insert(id);
             return false;
         }
         if span.ctxt().in_external_macro(cx.sess().source_map()) {
