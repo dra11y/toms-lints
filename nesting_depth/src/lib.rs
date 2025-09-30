@@ -140,18 +140,64 @@ impl NestingDepth {
             self.lints.push(lint);
         }
 
-        if let Some(lint) = ctx.consec_if_else_lint.take() {
-            self.lints.push(lint);
+        if ctx.consec_if_branch_count > self.config.max_consec_if_else {
+            let outer_span = self.contexts.get(1).map(|ctx| ctx.span);
+            println!("consec if branch count: {}", ctx.consec_if_branch_count);
+            self.lints.push(NestingLint {
+                outer_span,
+                span: ctx.span,
+                kind: ContextKind::If,
+                reason: Reason::ConsecIfElse(ctx.consec_if_branch_count),
+            });
         }
     }
 
+    fn find_root_if_parent(&mut self) -> Option<&mut Context> {
+        let mut iter = self.contexts.iter_mut().rev();
+        iter.reduce(|mut acc, ctx| {
+            if ctx.kind.is_if_or_if_branch() {
+                acc = ctx;
+            }
+            acc
+        })
+    }
+
     fn pop_context_unchecked(&mut self, cx: &EarlyContext<'_>) -> Context {
-        let ctx = self.contexts.pop().expect("pop context unchecked");
+        let mut ctx = self.contexts.pop().expect("pop context unchecked");
+
         self.debug_visit(
             cx,
             &format!("POP CONTEXT: {} {}", ctx.id, ctx.kind),
             ctx.span,
         );
+
+        if ctx.kind.is_if_branch() {
+            if let Some(if_parent) = self.find_root_if_parent() {
+                println!("FOUND IF PARENT");
+                match ctx.kind {
+                    ContextKind::If => {
+                        if_parent.consec_if_else_count += 1;
+                    }
+                    ContextKind::Then | ContextKind::ElseIf | ContextKind::Else => {
+                        // These can only exist within a ContextKind::If,
+                        // and are automatically "reset" when the current If is popped.
+                        if_parent.consec_if_branch_count += 1;
+                        println!(
+                            "parent: {}, consec if branch count: {}",
+                            if_parent.kind, if_parent.consec_if_branch_count
+                        );
+                    }
+                    _ => {
+                        if_parent.consec_if_else_count = 0;
+                    }
+                }
+            } else {
+                println!("DID NOT FIND IF PARENT");
+            }
+        }
+
+        self.push_current_lints(cx, &mut ctx);
+
         ctx
     }
 
@@ -161,6 +207,7 @@ impl NestingDepth {
         kind: &ContextKind,
         id: &NodeId,
     ) -> Result<(), anyhow::Error> {
+        println!("CALLED POP CONTEXT");
         let mut ctx = self.pop_context_unchecked(cx);
 
         if ctx.kind != *kind {
@@ -176,8 +223,6 @@ impl NestingDepth {
                 ctx.id
             );
         }
-
-        self.push_current_lints(cx, &mut ctx);
 
         Ok(())
     }

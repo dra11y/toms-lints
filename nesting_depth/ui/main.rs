@@ -175,6 +175,7 @@ fn seven() {
         }
     }
     let x = 1;
+    //~v ERROR: 22 found
     if x < 1 {
         println!("x < 1");
         if x < 2 {
@@ -190,7 +191,6 @@ fn seven() {
                         println!("x < 30");
                     } else if x < 40 {
                         println!("x < 40");
-                    //~v ERROR: 5 found
                     } else if x < 50 {
                         println!("x < 50");
                     } else if x < 60 {
@@ -209,7 +209,6 @@ fn seven() {
         println!("x < 2");
     } else if x < 3 {
         println!("x < 3");
-    //~v ERROR: 11 found
     } else if x < 4 {
         println!("x < 4");
     } else if x < 5 {

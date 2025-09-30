@@ -19,6 +19,22 @@ pub enum ContextKind {
     Loop,
 }
 
+impl ContextKind {
+    pub fn is_if_or_if_branch(&self) -> bool {
+        matches!(
+            self,
+            ContextKind::If | ContextKind::Then | ContextKind::ElseIf | ContextKind::Else
+        )
+    }
+
+    pub fn is_if_branch(&self) -> bool {
+        matches!(
+            self,
+            ContextKind::Then | ContextKind::ElseIf | ContextKind::Else
+        )
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Reason {
     Depth(usize),
@@ -38,9 +54,10 @@ pub struct Context {
     pub span: Span,
     pub id: NodeId,
     pub kind: ContextKind,
-    pub consec_if_else_span: Option<Span>,
+    /// Count of consecutive if/else-if/else branches in the current block.
     pub consec_if_else_count: usize,
-    pub consec_if_else_lint: Option<NestingLint>,
+    /// Count of consecutive if/else-if branches in the current if-else chain.
+    pub consec_if_branch_count: usize,
 }
 
 impl Context {
@@ -49,9 +66,8 @@ impl Context {
             span,
             kind,
             id,
-            consec_if_else_span: None,
             consec_if_else_count: 0,
-            consec_if_else_lint: None,
+            consec_if_branch_count: 0,
         }
     }
 }

@@ -9,10 +9,10 @@ pub const HELP_MESSAGE: &str = "use early returns and guard clauses to reduce ne
 const DEFAULT_MAX_DEPTH: usize = 3;
 
 /// Default maximum items in an if-then block
-const DEFAULT_MAX_THEN_ITEMS: usize = 10;
+const DEFAULT_MAX_THEN_ITEMS: usize = 20;
 
 /// Default maximum consecutive if-else statements
-const DEFAULT_MAX_CONSEC_IF_ELSE: usize = 3;
+const DEFAULT_MAX_CONSEC_IF_ELSE: usize = 10;
 
 const DEFAULT_DEBUG: bool = cfg!(debug_assertions);
 
