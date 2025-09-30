@@ -345,6 +345,9 @@ impl EarlyLintPass for NestingDepth {
                     self.push_context(cx, ContextKind::Else, expr.id, expr.span);
                     return;
                 }
+                if block.stmts.is_empty() {
+                    return;
+                }
                 self.debug_visit(
                     cx,
                     &format!("ENTER EXPR BLOCK: {} {}", expr.id, block.id),
@@ -400,6 +403,9 @@ impl EarlyLintPass for NestingDepth {
                     );
                     self.pop_context(cx, &ContextKind::Else, &expr.id)
                         .expect("pop else context");
+                    return;
+                }
+                if block.stmts.is_empty() {
                     return;
                 }
                 self.debug_visit(

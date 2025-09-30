@@ -237,4 +237,194 @@ fn main() {
     five();
     six();
     seven();
+    // Additional edge cases
+    edge_let_else_reduction();
+    edge_deep_only_in_final_else(5);
+    edge_mixed_match_loop_closure(true, 0);
+    edge_sequential_independent_ifs(10);
+    edge_nested_matches(0);
+    edge_macro_local(9);
+    edge_multiple_closures_layers(4);
+    edge_partial_deep_path(true);
+}
+
+// --- Edge case functions for additional lint coverage ---
+
+#[allow(unused)]
+fn edge_let_else_reduction() {
+    let some_val = Some(10);
+    let Some(a) = some_val else {
+        return;
+    };
+    let inner = Some(a + 2);
+    let Some(b) = inner else {
+        return;
+    };
+    if b > 5 {
+        if b % 2 == 0 {
+            if b < 20 {
+                //~v ERROR: 4 levels
+                if b != 13 {
+                    let _ = b; // silence copy drop
+                }
+            }
+        }
+    }
+}
+
+#[allow(unused)]
+fn edge_deep_only_in_final_else(x: i32) {
+    if x < 0 {
+        if x < -5 {
+            let _ = x;
+        }
+    } else if x == 0 {
+        if x + 1 == 1 {
+            let _ = x;
+        }
+    } else {
+        if x > 1 {
+            if x > 2 {
+                //~v ERROR: 5 levels
+                if x > 3 {
+                    if x > 4 {
+                        let _ = x;
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[allow(unused)]
+fn edge_mixed_match_loop_closure(flag: bool, code: u32) {
+    let mut i = 0;
+    while i < 2 {
+        match code {
+            0 => {
+                let f = || {
+                    //~v ERROR: 7 levels
+                    if flag {
+                        if code == 0 {
+                            if i == 0 {
+                                if i < 10 {
+                                    let _ = i;
+                                }
+                            }
+                        }
+                    }
+                };
+                f();
+            }
+            1 => {
+                if flag {
+                    let _ = code;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+}
+
+#[allow(unused)]
+fn edge_sequential_independent_ifs(n: i32) {
+    if n > 0 {
+        let _ = n;
+    }
+    if n > 1 {
+        let _ = n;
+    }
+    if n > 2 {
+        let _ = n;
+    }
+    if n > 3 {
+        let _ = n;
+    }
+    if n > 4 {
+        let _ = n;
+    }
+}
+
+#[allow(unused)]
+fn edge_nested_matches(v: i32) {
+    match v {
+        0 => match v + 1 {
+            1 => match v + 2 {
+                //~v ERROR: 6 levels
+                2 => {
+                    if v == 0 {
+                        if v + 3 == 3 {
+                            let _ = v;
+                        }
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        },
+        _ => {}
+    }
+}
+
+macro_rules! make_nested_if {
+    ($val:expr) => {
+        if $val > 0 {
+            if $val > 1 {
+                if $val > 2 {
+                    //~v ERROR: 5 levels
+                    if $val > 3 {
+                        if $val > 4 {
+                            let _ = $val;
+                        }
+                    }
+                }
+            }
+        }
+    };
+}
+
+#[allow(unused)]
+fn edge_macro_local(v: i32) {
+    make_nested_if!(v);
+}
+
+#[allow(unused)]
+fn edge_multiple_closures_layers(x: i32) {
+    let outer = || {
+        let mid = || {
+            let inner = || {
+                //~v ERROR: 7 levels
+                if x > 0 {
+                    if x > 1 {
+                        if x > 2 {
+                            if x > 3 {
+                                let _ = x;
+                            }
+                        }
+                    }
+                }
+            };
+            inner();
+        };
+        mid();
+    };
+    outer();
+}
+
+#[allow(unused)]
+fn edge_partial_deep_path(cond: bool) {
+    if cond {
+        if cond {
+            if cond {
+                //~v ERROR: 4 levels
+                if cond {
+                    let _ = cond;
+                }
+            }
+        }
+    } else if !cond {
+        // shallow alternative branch
+        let _ = cond;
+    }
 }
