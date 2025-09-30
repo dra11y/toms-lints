@@ -16,7 +16,7 @@ use config::{Config, HELP_MESSAGE};
 use context::{Context, ContextKind, NestingLint, Reason};
 use debug::debug_expr_kind;
 use dylint_linting::config_or_default;
-use rustc_ast::{Arm, AssocItem, Crate, Expr, ExprKind, Item, ItemKind, ModKind, NodeId};
+use rustc_ast::{Arm, AssocItem, Crate, Expr, ExprKind, Inline, Item, ItemKind, ModKind, NodeId};
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_span::{ExpnKind, Span};
 use std::collections::HashSet;
@@ -162,12 +162,7 @@ impl NestingDepth {
         self.contexts
             .iter()
             .skip(1)
-            .filter(|c| {
-                !matches!(
-                    c.kind,
-                    ContextKind::If | ContextKind::Else | ContextKind::ElseIf
-                ) && (c.kind != ContextKind::Closure || !self.config.ignore_closures)
-            })
+            .filter(|c| c.kind.count_depth(&self.config))
             .count()
     }
 
@@ -243,7 +238,7 @@ impl NestingDepth {
                     }
                 }
             } else {
-                println!("DID NOT FIND IF PARENT");
+                panic!("DID NOT FIND IF PARENT: {} {}", ctx.kind, ctx.id);
             }
         }
 
@@ -264,17 +259,6 @@ impl NestingDepth {
         }
 
         Ok(())
-    }
-
-    fn should_check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) -> bool {
-        matches!(
-            item.kind,
-            // ItemKind::Static(_) |
-            ItemKind::Fn(..)
-                | ItemKind::Mod(_, _, ModKind::Loaded(..))
-                | ItemKind::Trait(..)
-                | ItemKind::Impl(..)
-        ) && self.should_check_id(cx, item.id, item.span)
     }
 
     /// Returns `true` if the node is not from a macro expansion and can be checked
@@ -305,6 +289,17 @@ impl NestingDepth {
         self.checked_ids.insert(id);
         true
     }
+
+    fn item_kind(&mut self, cx: &EarlyContext<'_>, item: &Item) -> Option<ContextKind> {
+        match &item.kind {
+            ItemKind::Fn(_) => Some(ContextKind::Func),
+            ItemKind::Mod(_, _, ModKind::Loaded(_, Inline::Yes, _)) => Some(ContextKind::Mod),
+            ItemKind::Trait(_) => Some(ContextKind::Trait),
+            ItemKind::Impl(_) => Some(ContextKind::Impl),
+            _ => None,
+        }
+        .filter(|_| self.should_check_id(cx, item.id, item.span))
+    }
 }
 
 impl EarlyLintPass for NestingDepth {
@@ -323,11 +318,11 @@ impl EarlyLintPass for NestingDepth {
 
     #[inline(always)]
     fn check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) {
-        if !self.should_check_item(cx, item) {
+        let Some(kind) = self.item_kind(cx, item) else {
             return;
-        }
+        };
 
-        self.push_context(cx, ContextKind::Item, item.id, item.span);
+        self.push_context(cx, kind, item.id, item.span);
         self.debug_visit_extra(cx, "ENTER item", item.span, item.kind.descr());
     }
 

@@ -5,8 +5,10 @@ use crate::config::Config;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ContextKind {
-    Item,
     Func,
+    Mod,
+    Trait,
+    Impl,
     If,
     Then,
     ElseIf,
@@ -21,6 +23,26 @@ pub enum ContextKind {
 }
 
 impl ContextKind {
+    pub fn count_depth(&self, config: &Config) -> bool {
+        match self {
+            ContextKind::Func => true,
+            ContextKind::Mod => false,
+            ContextKind::Trait => false,
+            ContextKind::Impl => false,
+            ContextKind::If => false,
+            ContextKind::Then => true,
+            ContextKind::ElseIf => false,
+            ContextKind::Else => false,
+            ContextKind::Match => true,
+            ContextKind::Closure => !config.ignore_closures,
+            ContextKind::Block => true,
+            ContextKind::ExprBlock => true,
+            ContextKind::While => true,
+            ContextKind::For => true,
+            ContextKind::Loop => true,
+        }
+    }
+
     pub fn is_if_or_if_branch(&self) -> bool {
         matches!(
             self,
@@ -76,7 +98,6 @@ impl Context {
 impl ContextKind {
     pub fn descr(&self) -> &'static str {
         match self {
-            ContextKind::Item => "item",
             ContextKind::Func => "func",
             ContextKind::If => "if",
             ContextKind::Then => "then",
@@ -89,6 +110,9 @@ impl ContextKind {
             ContextKind::While => "while",
             ContextKind::For => "for",
             ContextKind::Loop => "loop",
+            ContextKind::Mod => "mod",
+            ContextKind::Trait => "trait",
+            ContextKind::Impl => "impl",
         }
     }
 }
