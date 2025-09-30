@@ -68,10 +68,13 @@ impl NestingDepth {
         let code = code.then(|| self.debug_code(cx, span));
         let depth = self.depth();
         let span = self.debug_span(cx, span);
+        let extra = match extra {
+            Some(extra) => format!("{extra} "),
+            None => String::new(),
+        };
         let debug_str = format!(
-            "{}[{depth:2}] {method} {} {span} {}",
+            "{}[{depth:2}] {method} {extra}{span} {}",
             "  ".repeat(depth),
-            extra.unwrap_or_default(),
             code.unwrap_or_default(),
         );
         println!("{debug_str}");

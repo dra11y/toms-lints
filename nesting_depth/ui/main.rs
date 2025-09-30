@@ -7,6 +7,11 @@ static LAZY_VALUE: LazyLock<i32> = LazyLock::new(|| {
             if let Ok(validated) = Ok::<i32, &str>(config) {
                 //~v ERROR: 4 levels
                 if validated == 42 { 42 } else { 0 }
+            } else if config < 1 {
+                {
+                    let x = 1;
+                    x + 1
+                }
             } else {
                 0
             }
