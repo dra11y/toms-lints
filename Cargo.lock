@@ -1166,16 +1166,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nesting_too_deep"
-version = "0.1.0"
-dependencies = [
- "dylint_linting",
- "dylint_uitesting",
- "serde",
- "serde-inline-default",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
