@@ -21,7 +21,7 @@ use rustc_ast::{
 };
 use rustc_lint::{EarlyContext, EarlyLintPass, Level, LintContext};
 use rustc_lint_defs::Applicability;
-use rustc_parse::new_parser_from_source_str;
+use rustc_parse::{lexer::StripTokens, new_parser_from_source_str};
 use rustc_span::{BytePos, ExpnKind, FileName, MacroKind, Span, hygiene};
 
 /// from clippy_utils: https://github.com/rust-lang/rust-clippy/blob/master/clippy_utils/src/macros.rs#L456
@@ -306,6 +306,7 @@ fn parse_macro_call_args(cx: &EarlyContext, callsite: Span) -> Option<Vec<String
         &cx.sess().psess,
         FileName::anon_source_code(&snippet),
         snippet.clone(),
+        StripTokens::Nothing,
     )
     .ok()?;
 
@@ -354,6 +355,7 @@ fn reinline_entire_invocation(cx: &EarlyContext, callsite: Span) -> Option<Strin
         &cx.sess().psess,
         FileName::anon_source_code(&snippet),
         snippet.clone(),
+        StripTokens::Nothing,
     )
     .ok()?;
 
