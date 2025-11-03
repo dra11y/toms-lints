@@ -33,6 +33,9 @@ test *args="":
 bless *args="":
   BLESS=1 cargo test {{args}}
 
+check:
+  cargo check
+
 # Format
 fmt:
   cargo fmt --all

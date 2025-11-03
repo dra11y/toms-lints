@@ -32,17 +32,13 @@ serde = { version = "1", features = ["derive"] }
 serde-inline-default = "1"
 wherror = "2"
 
-# dylint = "4.1.0"
-# dylint_linting = "4.1.0"
-# dylint_testing = "4.1.0"
-
 dylint = { git = "https://github.com/trailofbits/dylint" }
 dylint_linting = { git = "https://github.com/trailofbits/dylint" }
 dylint_internal = { git = "https://github.com/trailofbits/dylint" }
 dylint_testing = { git = "https://github.com/trailofbits/dylint" }
 
 # KEEP OUR OWN FORK!
-dylint_uitesting = { version = "4.1.0", path = "/Users/tom/apps/dylint_uitesting" }
+dylint_uitesting = { version = "5", path = "/Users/tom/apps/dylint_uitesting" }
 
 [workspace.lints.rust.unexpected_cfgs]
 level = "deny"
