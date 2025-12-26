@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use rustc_ast::ExprKind;
 use rustc_lint::{EarlyContext, LintContext};
-use rustc_span::{FileNameDisplayPreference, Span, source_map::SourceMap};
+use rustc_span::{RemapPathScopeComponents, Span, source_map::SourceMap};
 use serde::Deserialize;
 
 use crate::NestingDepth;
@@ -110,7 +110,7 @@ pub fn debug_span_info(span: Span, source_map: &SourceMap) -> SpanRange {
         .0
         .map(|f| {
             f.name
-                .display(FileNameDisplayPreference::Remapped)
+                .display(RemapPathScopeComponents::all())
                 .to_string_lossy()
                 .to_string()
         })
@@ -128,7 +128,7 @@ pub fn debug_span(span: Span, source_map: &SourceMap) -> String {
         .0
         .map(|f| {
             f.name
-                .display(FileNameDisplayPreference::Remapped)
+                .display(RemapPathScopeComponents::all())
                 .to_string_lossy()
                 .to_string()
         })

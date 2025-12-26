@@ -19,7 +19,7 @@ clippy_config.workspace = true
 clippy_lints.workspace = true
 clippy_utils.workspace = true
 declare_clippy_lint.workspace = true
-serde_json = "1.0"
+serde_json = "1"
 
 [dev-dependencies]
 dylint.workspace = true
@@ -27,10 +27,10 @@ dylint_internal.workspace = true
 dylint_uitesting.workspace = true
 
 anyhow.workspace = true
-cargo_metadata = "0.19.2" # pinned by dylint_internal
+cargo_metadata.workspace = true
 env_logger = "0.11"
 log = "0.4"
-tempfile = "3.20"
+tempfile = "3"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
