@@ -15,6 +15,9 @@ bump-toolchain: && clean (test '--workspace')
   toolchain=$(curl -s https://raw.githubusercontent.com/rust-lang/rust-clippy/master/rust-toolchain.toml)
   nightly=$(echo "$toolchain" | grep 'channel =' | sed -E 's/.*channel = "(nightly-[0-9]{4}-[0-9]{2}-[0-9]{2})".*/\1/')
   sed -i '' -E "s/^\s*channel =.+$/channel = \"$nightly\"/" rust-toolchain.toml
+  cargo clean
+  rm -f Cargo.lock
+  cargo update
   which dylint-link || cargo binstall -y dylint-link
   echo "Updated rust-toolchain.toml to use $nightly"
 

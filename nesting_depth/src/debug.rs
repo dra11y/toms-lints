@@ -110,7 +110,7 @@ pub fn debug_span_info(span: Span, source_map: &SourceMap) -> SpanRange {
         .0
         .map(|f| {
             f.name
-                .display(RemapPathScopeComponents::all())
+                .display(RemapPathScopeComponents::DIAGNOSTICS)
                 .to_string_lossy()
                 .to_string()
         })
@@ -128,7 +128,7 @@ pub fn debug_span(span: Span, source_map: &SourceMap) -> String {
         .0
         .map(|f| {
             f.name
-                .display(RemapPathScopeComponents::all())
+                .display(RemapPathScopeComponents::DIAGNOSTICS)
                 .to_string_lossy()
                 .to_string()
         })
